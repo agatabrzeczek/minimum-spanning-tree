@@ -1,0 +1,2 @@
+# magisterka
+praca magisterska :)
