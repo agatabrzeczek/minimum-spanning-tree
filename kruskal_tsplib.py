@@ -1,8 +1,9 @@
 import tsplib95
 import matplotlib.pyplot as plt
 import networkx as nx
+import tracemalloc
 
-def DrawGraph():
+def DrawGraph(): #DRAWING
     global current_suplot
 
     subax2 = plt.subplot(111)
@@ -19,11 +20,13 @@ def DrawGraph():
     current_suplot += 1
 
 def ExamineEdge():
+    global i
+    
     T.add_edge(edges[0][0], edges[0][1], weight = edges[0][2]) #temporarily adding the edge to the MST
 
     if (len(nx.cycle_basis(T)) == 0):
-        chosen_edges.append(edges[0])
-        DrawGraph()
+        i += 1
+        DrawGraph() #DRAWING
     else:
         T.remove_edge(edges[0][0], edges[0][1])
 
@@ -44,12 +47,11 @@ def SortEdges():
 
     edge_list.sort(key=GetWeight)
 
-    for edge in edge_list:
-        print(edge)
-
     return edge_list
 
-problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/gr17.tsp')
+tracemalloc.start()
+
+problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/burma14.tsp')
 
 G = problem.get_graph() #our starting graph
 T = nx.Graph() #our minimum spanning tree
@@ -60,13 +62,16 @@ for i in range(0, len(G.nodes)+1): #removing edges that connect a node to itself
 
 edges = SortEdges()
 
-chosen_edges = []
+i = 0
 
-#setup for drawing
+#DRAWING:
 my_seed = 6
 current_suplot = 1
-
 DrawGraph()
 
-while(len(chosen_edges) < len(G.nodes) - 1):
+while(i < len(G.nodes) - 1):
     ExamineEdge()
+
+print(tracemalloc.get_traced_memory())
+
+tracemalloc.stop()
