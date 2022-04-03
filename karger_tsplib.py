@@ -1,18 +1,36 @@
 from cmath import inf
+from os import remove
 import tsplib95
 import matplotlib.pyplot as plt
 import networkx as nx
 import tracemalloc
 
 def BoruvkaStep():
+    global node_mapping
     global G
     nodes_to_be_removed = []
+    edges_to_be_contracted = []
     for node in G.nodes:
-        minimum_edge, minimum_weight = GetMinimumWeight(node)
-        T.add_edge(minimum_edge[0], minimum_edge[1], weight=minimum_weight)
-        nodes_to_be_removed.append(Contract(minimum_edge))
+        edges_to_be_contracted.append(GetMinimumEdge(node))
 
-    print(nodes_to_be_removed)
+    for edge in edges_to_be_contracted:
+        if (G.has_edge(edge[0], edge[1])):
+            T.add_edge(edge[0], edge[1], weight=G.get_edge_data(edge[0], edge[1])["weight"])
+            G.remove_edge(edge[0], edge[1])
+
+    for edge in edges_to_be_contracted:
+
+        node_to_be_removed = Contract(edge)
+
+        if (G.has_node(node_to_be_removed)):
+            G.remove_node(node_to_be_removed)
+
+        DrawGraph()
+
+        #G.remove_nodes_from(nodes_to_be_removed)
+
+    if (debug == True):
+        DrawGraph()
 
     # for j in range(0, len(to_be_contracted)):
     #     try:
@@ -30,21 +48,37 @@ def BoruvkaStep():
     #         DrawGraph()
 
 def Contract(edge):
+    global node_mapping
+
+    mapped_edge = [edge[0], edge[1]]
+
+    while (True):
+        if (mapped_edge[0] in node_mapping):
+            mapped_edge[0] = node_mapping[edge[0]]
+        else:
+            break
+
+    while (True):
+        if (mapped_edge[1] in node_mapping):
+            mapped_edge[1] = node_mapping[edge[1]]
+        else:
+            break
+
     #print(G.edges(nbunch = [edge[0], edge[1]]))
-    for j in range(1, len(G.nodes)+1):
-        if (j == edge[0]):
+    for j in range(1, len(original_G.nodes)+1):
+        if (j in (edge[0], edge[1], mapped_edge[0], mapped_edge[1])):
             continue
-        elif (j == edge[1]):
-            continue
-        if (G.has_edge(edge[0], j) and G.has_edge(edge[1], j)): #check this TODO
-            if (G.get_edge_data(edge[0], j)["weight"] > G.get_edge_data(edge[1], j)["weight"]):
-                G[edge[0]][j]['weight']=G[edge[1]][j]['weight']
-            G.remove_edge(edge[1], j)
+        if (G.has_edge(mapped_edge[0], j) and G.has_edge(mapped_edge[1], j)):
+            if (G.get_edge_data(min(mapped_edge), j)["weight"] > G.get_edge_data(max(mapped_edge), j)["weight"]):
+                G[min(mapped_edge)][j]['weight']=G[max(mapped_edge)][j]['weight']
+            G.remove_edge(max(mapped_edge), j)
+
+        node_mapping[max(edge)] = min(edge)
+        print(node_mapping)
 
         # if(not G.has_edge(edge[0], j)):
         #     G.add_edge(edge[0], j, weight=)
-            DrawGraph()
-    return edge[1]
+    return max(mapped_edge)
 
     #minimum_edge, minimum_weight = GetMinimumWeight([edge[0], edge[1]])
     #print(str(minimum_edge) + ", " + str(minimum_weight))
@@ -63,12 +97,12 @@ def DrawGraph(): #DRAWING
     plt.savefig('savefig/karger/boruvka_steps/subplot_' + str(current_suplot) + '.png', dpi=600)
     plt.clf()
 
-    # posT = nx.spring_layout(original_G, seed=my_seed)
-    # nx.draw_networkx_nodes(original_G, posT, node_size=160)
-    # nx.draw_networkx_edges(original_G, posT, edgelist=original_G.edges, width=1)
-    # nx.draw_networkx_edges(original_G, posT, edgelist=T.edges, width=1, edge_color="green")
-    # nx.draw_networkx_labels(original_G, posT, font_size=8, font_family="sans-serif")
-    # nx.draw_networkx_edge_labels(original_G, posT, nx.get_edge_attributes(original_G, 'weight'), font_size=4)
+    posT = nx.spring_layout(original_G, seed=my_seed)
+    nx.draw_networkx_nodes(original_G, posT, node_size=160)
+    nx.draw_networkx_edges(original_G, posT, edgelist=original_G.edges, width=1)
+    nx.draw_networkx_edges(original_G, posT, edgelist=T.edges, width=1, edge_color="green")
+    nx.draw_networkx_labels(original_G, posT, font_size=8, font_family="sans-serif")
+    nx.draw_networkx_edge_labels(original_G, posT, nx.get_edge_attributes(original_G, 'weight'), font_size=4)
 
     plt.savefig('savefig/karger/mst/subplot_' + str(current_suplot) + '.png', dpi=600)
     plt.clf()
@@ -89,13 +123,13 @@ def ExamineEdge():
 
     edges.pop(0)
 
-def GetMinimumWeight(nodes): #returns the edge that has minimum weight out of all edges incident to the passed node(s)
+def GetMinimumEdge(nodes): #returns the edge that has minimum weight out of all edges incident to the passed node(s)
     minimum_weight = inf
     for edge in G.edges(nbunch=nodes):
         if (G.get_edge_data(edge[0], edge[1])["weight"] < minimum_weight):
             minimum_weight = G.get_edge_data(edge[0], edge[1])["weight"]
             minimum_edge = edge
-    return minimum_edge, minimum_weight
+    return minimum_edge
 
 def GetWeight(u, v):
     return G.get_edge_data(u, v)["weight"]
@@ -119,22 +153,25 @@ debug = True
 problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/burma14.tsp')
 
 G = problem.get_graph() #our starting graph
-original_G = G
 T = nx.Graph() #our minimum spanning tree
 
 for i in range(0, len(G.nodes)+1): #removing edges that connect a node to itself
     if (G.has_edge(i, i)):
         G.remove_edge(i, i)
 
+original_G = G.copy()
+
 tracemalloc.start()
 
 current_suplot = 1
+node_mapping = {}
 
 #DRAWING:
 if (debug == True):
     DrawGraph()
 
 BoruvkaStep()
+#BoruvkaStep()
 
 #DRAWING:
 if (debug == True):
