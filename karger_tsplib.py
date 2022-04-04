@@ -25,8 +25,6 @@ def BoruvkaStep():
         if (G.has_node(node_to_be_removed)):
             G.remove_node(node_to_be_removed)
 
-        DrawGraph()
-
         #G.remove_nodes_from(nodes_to_be_removed)
 
     if (debug == True):
@@ -54,17 +52,20 @@ def Contract(edge):
 
     while (True):
         if (mapped_edge[0] in node_mapping):
-            mapped_edge[0] = node_mapping[edge[0]]
+            mapped_edge[0] = node_mapping[mapped_edge[0]]
         else:
             break
 
     while (True):
         if (mapped_edge[1] in node_mapping):
-            mapped_edge[1] = node_mapping[edge[1]]
+            mapped_edge[1] = node_mapping[mapped_edge[1]]
         else:
             break
 
+    if (mapped_edge[0] == mapped_edge[1]): #if this edge has already been contracted, return
+        return None
     #print(G.edges(nbunch = [edge[0], edge[1]]))
+    #if (mapped_edge[0] in G.nodes and mapped_edge[1] in G.nodes):
     for j in range(1, len(original_G.nodes)+1):
         if (j in (edge[0], edge[1], mapped_edge[0], mapped_edge[1])):
             continue
@@ -74,10 +75,13 @@ def Contract(edge):
             G.remove_edge(max(mapped_edge), j)
 
         node_mapping[max(edge)] = min(edge)
-        print(node_mapping)
 
-        # if(not G.has_edge(edge[0], j)):
-        #     G.add_edge(edge[0], j, weight=)
+            # if(not G.has_edge(edge[0], j)):
+            #     G.add_edge(edge[0], j, weight=)
+
+    if (debug == True):
+        DrawGraph()
+
     return max(mapped_edge)
 
     #minimum_edge, minimum_weight = GetMinimumWeight([edge[0], edge[1]])
