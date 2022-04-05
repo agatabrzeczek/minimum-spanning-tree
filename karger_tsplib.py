@@ -1,13 +1,13 @@
 from cmath import inf
-from os import remove
+import random
 import tsplib95
 import matplotlib.pyplot as plt
 import networkx as nx
 import tracemalloc
 
-def BoruvkaStep():
+def BoruvkaStep(G):
     global node_mapping
-    global G
+    #global G
     nodes_to_be_removed = []
     edges_to_be_contracted = []
     for node in G.nodes:
@@ -111,6 +111,15 @@ def DrawGraph(): #DRAWING
     plt.savefig('savefig/karger/mst/subplot_' + str(current_suplot) + '.png', dpi=600)
     plt.clf()
 
+    pos = nx.spring_layout(G, seed=my_seed)  # positions for all nodes - seed for reproducibility
+    nx.draw_networkx_nodes(G, pos, node_size=160)
+    nx.draw_networkx_edges(G, pos, edgelist=H.edges, width=1)
+    nx.draw_networkx_labels(G, pos, font_size=8, font_family="sans-serif")
+    nx.draw_networkx_edge_labels(G, pos, nx.get_edge_attributes(H, 'weight'), font_size=4)
+
+    plt.savefig('savefig/karger/random_selection/subplot_' + str(current_suplot) + '.png', dpi=600)
+    plt.clf()
+
     current_suplot += 1
 
 def GetMinimumEdge(nodes): #returns the edge that has minimum weight out of all edges incident to the passed node(s)
@@ -167,12 +176,34 @@ def RemapEdge(edge):
     
     return remapped_edge
 
+def RunIteration(graph):
+    #print(str(len(T.edges)) + " out of " + str(len(original_G.nodes) - 1))
+    BoruvkaStep(graph)
+    BoruvkaStep(graph)
+    subgraph = SelectEdgesRandomly(graph)
+    if (len(T.edges) == (len(original_G.nodes) - 1)):
+        return
+    RunIteration(subgraph)
+
+def SelectEdgesRandomly(G):
+    for edge in G.edges:
+        decision = random.randrange(0, 2)
+        print(decision)
+        if (decision == 1):
+            H.add_edge(edge[0], edge[1], weight=G.get_edge_data(edge[0], edge[1])["weight"])
+
+    if (debug == True):
+        DrawGraph()
+
+    return H
+
 debug = True
 
 problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/burma14.tsp')
 
 G = problem.get_graph() #our starting graph
 T = nx.Graph() #our minimum spanning tree
+H = nx.Graph() #after random selection
 
 for i in range(0, len(G.nodes)+1): #removing edges that connect a node to itself
     if (G.has_edge(i, i)):
@@ -189,8 +220,7 @@ node_mapping = []
 if (debug == True):
     DrawGraph()
 
-BoruvkaStep()
-BoruvkaStep()
+RunIteration(G)
 
 #DRAWING:
 if (debug == True):
