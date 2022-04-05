@@ -15,7 +15,9 @@ def BoruvkaStep():
 
     for edge in edges_to_be_contracted:
         if (G.has_edge(edge[0], edge[1])):
-            T.add_edge(edge[0], edge[1], weight=G.get_edge_data(edge[0], edge[1])["weight"])
+            remapped_edge = RemapEdge(edge)
+            #print(remapped_edge_candidates)
+            T.add_edge(remapped_edge[0], remapped_edge[1], weight=original_G.get_edge_data(remapped_edge[0], remapped_edge[1])["weight"])
             G.remove_edge(edge[0], edge[1])
 
     for edge in edges_to_be_contracted:
@@ -25,10 +27,10 @@ def BoruvkaStep():
         if (G.has_node(node_to_be_removed)):
             G.remove_node(node_to_be_removed)
 
-        #G.remove_nodes_from(nodes_to_be_removed)
+            if (debug == True):
+                DrawGraph()
 
-    if (debug == True):
-        DrawGraph()
+        #G.remove_nodes_from(nodes_to_be_removed)
 
     # for j in range(0, len(to_be_contracted)):
     #     try:
@@ -48,19 +50,19 @@ def BoruvkaStep():
 def Contract(edge):
     global node_mapping
 
-    mapped_edge = [edge[0], edge[1]]
+    # while (True):
+    #     if (mapped_edge[0] in node_mapping):
+    #         mapped_edge[0] = node_mapping[mapped_edge[0]]
+    #     else:
+    #         break
 
-    while (True):
-        if (mapped_edge[0] in node_mapping):
-            mapped_edge[0] = node_mapping[mapped_edge[0]]
-        else:
-            break
+    mapped_edge = MapEdge(edge)
 
-    while (True):
-        if (mapped_edge[1] in node_mapping):
-            mapped_edge[1] = node_mapping[mapped_edge[1]]
-        else:
-            break
+    # while (True):
+    #     if (mapped_edge[1] in node_mapping):
+    #         mapped_edge[1] = node_mapping[mapped_edge[1]]
+    #     else:
+    #         break
 
     if (mapped_edge[0] == mapped_edge[1]): #if this edge has already been contracted, return
         return None
@@ -74,13 +76,11 @@ def Contract(edge):
                 G[min(mapped_edge)][j]['weight']=G[max(mapped_edge)][j]['weight']
             G.remove_edge(max(mapped_edge), j)
 
-        node_mapping[max(edge)] = min(edge)
+        if (not ([max(edge), min(edge)] in node_mapping)):
+            node_mapping.append([max(edge), min(edge)])
 
             # if(not G.has_edge(edge[0], j)):
             #     G.add_edge(edge[0], j, weight=)
-
-    if (debug == True):
-        DrawGraph()
 
     return max(mapped_edge)
 
@@ -103,7 +103,7 @@ def DrawGraph(): #DRAWING
 
     posT = nx.spring_layout(original_G, seed=my_seed)
     nx.draw_networkx_nodes(original_G, posT, node_size=160)
-    nx.draw_networkx_edges(original_G, posT, edgelist=original_G.edges, width=1)
+    #nx.draw_networkx_edges(original_G, posT, edgelist=original_G.edges, width=1)
     nx.draw_networkx_edges(original_G, posT, edgelist=T.edges, width=1, edge_color="green")
     nx.draw_networkx_labels(original_G, posT, font_size=8, font_family="sans-serif")
     nx.draw_networkx_edge_labels(original_G, posT, nx.get_edge_attributes(original_G, 'weight'), font_size=4)
@@ -113,20 +113,6 @@ def DrawGraph(): #DRAWING
 
     current_suplot += 1
 
-def ExamineEdge():
-    global i
-
-    T.add_edge(edges[0][0], edges[0][1], weight = edges[0][2]) #temporarily adding the edge to the MST
-
-    if (len(nx.cycle_basis(T)) == 0):
-        i += 1
-        if (debug == True):
-            DrawGraph() #DRAWING
-    else:
-        T.remove_edge(edges[0][0], edges[0][1])
-
-    edges.pop(0)
-
 def GetMinimumEdge(nodes): #returns the edge that has minimum weight out of all edges incident to the passed node(s)
     minimum_weight = inf
     for edge in G.edges(nbunch=nodes):
@@ -135,22 +121,51 @@ def GetMinimumEdge(nodes): #returns the edge that has minimum weight out of all 
             minimum_edge = edge
     return minimum_edge
 
-def GetWeight(u, v):
-    return G.get_edge_data(u, v)["weight"]
+def MapEdge(edge):
+    mapped_edge = [edge[0], edge[1]]
+    while (True):
+        j = 1
+        for k in range(0, len(node_mapping)):
+            if (node_mapping[k][0] == mapped_edge[0]):
+                mapped_edge[0] = node_mapping[k][1]
+                j *= 0
+            elif (node_mapping[k][0] == mapped_edge[1]):
+                mapped_edge[1] = node_mapping[k][1]
+                j *= 0
+            else:
+                j *= 1
+        if (j == 1):
+            break
+    return mapped_edge
 
-def SortEdges():
-    edge_list = []
-
-    for edge_tuple in G.edges:
-        edge = []
-        edge.append(edge_tuple[0])
-        edge.append(edge_tuple[1])
-        edge.append(G[edge[0]][edge[1]]["weight"])
-        edge_list.append(edge) #converting from networkx datatype to normal list
-
-    edge_list.sort(key=GetWeight)
-
-    return edge_list
+def RemapEdge(edge):
+    remapped_edge_candidates = [[edge[0]], [edge[1]]]
+    while (True):
+        j = 1
+        for k in range(0, len(node_mapping)):
+            if (node_mapping[k][1] in remapped_edge_candidates[0] and not(node_mapping[k][0] in remapped_edge_candidates[0])):
+                remapped_edge_candidates[0].append(node_mapping[k][0])
+                j *= 0
+            elif (node_mapping[k][1] in remapped_edge_candidates[1] and not(node_mapping[k][0] in remapped_edge_candidates[1])):
+                remapped_edge_candidates[1].append(node_mapping[k][0])
+                j *= 0
+            elif (node_mapping[k][0] in remapped_edge_candidates[0] and not(node_mapping[k][1] in remapped_edge_candidates[0])):
+                remapped_edge_candidates[0].append(node_mapping[k][1])
+                j *= 0
+            elif (node_mapping[k][0] in remapped_edge_candidates[1] and not(node_mapping[k][1] in remapped_edge_candidates[1])):
+                remapped_edge_candidates[1].append(node_mapping[k][1])
+                j *= 0
+            else:
+                j *= 1
+        if (j == 1):
+            break
+    
+    for node_1 in remapped_edge_candidates[0]:
+        for node_2 in remapped_edge_candidates[1]:
+            if (G.get_edge_data(edge[0], edge[1])["weight"] == original_G.get_edge_data(node_1, node_2)["weight"]):
+                remapped_edge = (node_1, node_2)
+    
+    return remapped_edge
 
 debug = True
 
@@ -168,14 +183,14 @@ original_G = G.copy()
 tracemalloc.start()
 
 current_suplot = 1
-node_mapping = {}
+node_mapping = []
 
 #DRAWING:
 if (debug == True):
     DrawGraph()
 
 BoruvkaStep()
-#BoruvkaStep()
+BoruvkaStep()
 
 #DRAWING:
 if (debug == True):
