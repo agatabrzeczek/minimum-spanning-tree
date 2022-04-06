@@ -12,24 +12,25 @@ def BoruvkaStep(G):
     nodes_to_be_removed = []
     edges_to_be_contracted = []
     for node in G.nodes:
-        edges_to_be_contracted.append(GetMinimumEdge(node))
+        edges_to_be_contracted.append(GetMinimumEdge(G, node))
 
-    for edge in edges_to_be_contracted:
-        if (G.has_edge(edge[0], edge[1])):
-            remapped_edge = RemapEdge(edge)
-            #print(remapped_edge_candidates)
-            T.add_edge(remapped_edge[0], remapped_edge[1], weight=original_G.get_edge_data(remapped_edge[0], remapped_edge[1])["weight"])
-            G.remove_edge(edge[0], edge[1])
+    if (edges_to_be_contracted[0] != None):
+        for edge in edges_to_be_contracted:
+            if (G.has_edge(edge[0], edge[1])):
+                remapped_edge = RemapEdge(edge)
+                #print(remapped_edge_candidates)
+                T.add_edge(remapped_edge[0], remapped_edge[1], weight=original_G.get_edge_data(remapped_edge[0], remapped_edge[1])["weight"])
+                G.remove_edge(edge[0], edge[1])
 
-    for edge in edges_to_be_contracted:
+        for edge in edges_to_be_contracted:
 
-        node_to_be_removed = Contract(edge)
+            node_to_be_removed = Contract(G, edge)
 
-        if (G.has_node(node_to_be_removed)):
-            G.remove_node(node_to_be_removed)
+            if (G.has_node(node_to_be_removed)):
+                G.remove_node(node_to_be_removed)
 
-            if (debug == True):
-                DrawGraph()
+                if (debug == True):
+                    DrawGraph(G)
 
         #G.remove_nodes_from(nodes_to_be_removed)
 
@@ -48,7 +49,7 @@ def BoruvkaStep(G):
     #     if (debug == True):
     #         DrawGraph()
 
-def Contract(edge):
+def Contract(G, edge):
     global node_mapping
 
     # while (True):
@@ -69,12 +70,16 @@ def Contract(edge):
         return None
     #print(G.edges(nbunch = [edge[0], edge[1]]))
     #if (mapped_edge[0] in G.nodes and mapped_edge[1] in G.nodes):
-    for j in (original_G.nodes):
+    for j in (original_G.nodes): #TODO check if G nodes works
         if (j in (edge[0], edge[1], mapped_edge[0], mapped_edge[1])):
             continue
-        if (G.has_edge(mapped_edge[0], j) and G.has_edge(mapped_edge[1], j)):
-            if (G.get_edge_data(min(mapped_edge), j)["weight"] > G.get_edge_data(max(mapped_edge), j)["weight"]):
-                G[min(mapped_edge)][j]['weight']=G[max(mapped_edge)][j]['weight']
+        #if (G.has_edge(mapped_edge[0], j) and G.has_edge(mapped_edge[1], j)): #DID changes this
+        if (G.has_edge(max(mapped_edge), j)):
+            if (G.has_edge(mapped_edge[0], j) and G.has_edge(mapped_edge[1], j)):
+                if (G.get_edge_data(min(mapped_edge), j)["weight"] > G.get_edge_data(max(mapped_edge), j)["weight"]):
+                    G[min(mapped_edge)][j]['weight']=G[max(mapped_edge)][j]['weight']
+            else:
+                G.add_edge(min(mapped_edge), j, weight=G[max(mapped_edge)][j]['weight'])
             G.remove_edge(max(mapped_edge), j)
 
     if (not ([max(mapped_edge), min(mapped_edge)] in node_mapping)): #DID removed indentation
@@ -88,9 +93,9 @@ def Contract(edge):
     #minimum_edge, minimum_weight = GetMinimumWeight([edge[0], edge[1]])
     #print(str(minimum_edge) + ", " + str(minimum_weight))
 
-def DrawGraph(): #DRAWING
+def DrawGraph(G): #DRAWING
     global current_suplot
-    global G
+    #global G
     my_seed = 6
 
     pos = nx.spring_layout(G, seed=my_seed)  # positions for all nodes - seed for reproducibility
@@ -123,8 +128,9 @@ def DrawGraph(): #DRAWING
 
     current_suplot += 1
 
-def GetMinimumEdge(nodes): #returns the edge that has minimum weight out of all edges incident to the passed node(s)
+def GetMinimumEdge(G, nodes): #returns the edge that has minimum weight out of all edges incident to the passed node(s)
     minimum_weight = inf
+    minimum_edge = None
     for edge in G.edges(nbunch=nodes):
         if (G.get_edge_data(edge[0], edge[1])["weight"] < minimum_weight):
             minimum_weight = G.get_edge_data(edge[0], edge[1])["weight"]
@@ -198,13 +204,13 @@ def SelectEdgesRandomly(G):
             H.add_edge(edge[0], edge[1], weight=G.get_edge_data(edge[0], edge[1])["weight"])
 
     if (debug == True):
-        DrawGraph()
+        DrawGraph(G)
 
     return H
 
 debug = False
 
-problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/swiss42.tsp')
+problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/st70.tsp')
 
 G = problem.get_graph() #our starting graph
 T = nx.Graph() #our minimum spanning tree
@@ -223,13 +229,13 @@ node_mapping = []
 
 #DRAWING:
 if (debug == True):
-    DrawGraph()
+    DrawGraph(G)
 
 RunIteration(G)
 
 #DRAWING:
 if (debug == True):
-    DrawGraph()
+    DrawGraph(G)
 
 # edges_with_node = []
 # lightest_edges = []

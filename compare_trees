@@ -1,0 +1,37 @@
+import networkx as nx
+import tsplib95
+
+tree_1 = nx.Graph()
+edges_of_tree_1 = [(21, 34), (21, 12), (21, 17), (37, 58), (37, 47), (58, 50), (13, 29), (13, 31), (13, 70), (31, 69), (69, 38), (69, 35), (1, 36), (1, 16), (1, 23), (4, 18), (4, 2), (18, 42), (8, 28), (8, 26), (8, 3), (28, 
+14), (15, 24), (15, 57), (17, 43), (17, 9), (43, 41), (22, 63), (22, 59), (22, 66), (22, 38), (63, 57), (44, 68), (44, 30), (2, 7), (7, 32), (7, 19), (40, 61), (40, 9), (40, 27), (61, 39), (48, 67), (48, 11), (48, 54), (67, 56), (3, 32), (5, 10), (5, 53), (10, 52), (10, 50), (6, 41), (6, 42), (52, 60), (16, 
+47), (27, 46), (14, 20), (20, 30), (39, 45), (45, 25), (26, 49), (12, 60), (12, 33), (38, 23), (49, 55), (56, 65), (56, 51), (65, 64), (33, 54), (54, 62)]
+tree_2 = nx.Graph()
+edges_of_tree_2 = [(1, 36), (1, 23), (2, 7), (2, 4), (7, 19), (7, 32), (7, 59), (3, 32), (3, 8), (4, 18), (18, 42), (5, 10), (5, 53), (10, 50), (10, 52), (6, 41), (41, 42), (41, 43), (8, 28), (8, 26), (28, 14), (9, 40), (9, 
+17), (40, 61), (40, 27), (11, 48), (48, 67), (12, 21), (12, 33), (12, 60), (21, 34), (13, 29), (13, 70), (14, 20), (20, 30), (15, 24), (15, 57), (16, 47), (47, 23), (47, 58), (17, 43), (22, 63), (22, 38), (22, 59), (22, 66), (63, 57), (23, 38), (25, 45), (45, 39), (26, 49), (27, 46), (30, 44), (31, 69), (31, 70), (69, 35), (69, 38), (33, 54), (37, 58), (58, 50), (39, 61), (44, 68), (67, 56), (67, 54), (49, 55), (51, 56), (56, 65), (52, 60), (54, 62), (65, 64)]
+for edge in edges_of_tree_1:
+    tree_1.add_edge(edge[0], edge[1])
+
+for edge in edges_of_tree_2:
+    tree_2.add_edge(edge[0], edge[1])
+
+print(nx.difference(tree_1, tree_2).edges)
+print(nx.difference(tree_2, tree_1).edges)
+
+problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/st70.tsp')
+G = problem.get_graph() #our starting graph
+
+for i in range(0, len(G.nodes)+1): #removing edges that connect a node to itself
+    if (G.has_edge(i, i)):
+        G.remove_edge(i, i)
+
+sum = 0
+for edge in nx.difference(tree_1, tree_2).edges:
+    print(str(edge[0]) + "," + str(edge[1]) + "," + str(G.get_edge_data(edge[0], edge[1])["weight"]))
+    sum += G.get_edge_data(edge[0], edge[1])["weight"]
+print("sum for tree 1: " + str(sum))
+
+sum = 0
+for edge in nx.difference(tree_2, tree_1).edges:
+    print(str(edge[0]) + "," + str(edge[1]) + "," + str(G.get_edge_data(edge[0], edge[1])["weight"]))
+    sum += G.get_edge_data(edge[0], edge[1])["weight"]
+print("sum for tree 2: " + str(sum))
