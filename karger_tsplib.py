@@ -4,6 +4,7 @@ import tsplib95
 import matplotlib.pyplot as plt
 import networkx as nx
 import tracemalloc
+import sys
 
 def BoruvkaStep(G):
     global node_mapping
@@ -68,7 +69,7 @@ def Contract(edge):
         return None
     #print(G.edges(nbunch = [edge[0], edge[1]]))
     #if (mapped_edge[0] in G.nodes and mapped_edge[1] in G.nodes):
-    for j in range(1, len(original_G.nodes)+1):
+    for j in (original_G.nodes):
         if (j in (edge[0], edge[1], mapped_edge[0], mapped_edge[1])):
             continue
         if (G.has_edge(mapped_edge[0], j) and G.has_edge(mapped_edge[1], j)):
@@ -76,8 +77,8 @@ def Contract(edge):
                 G[min(mapped_edge)][j]['weight']=G[max(mapped_edge)][j]['weight']
             G.remove_edge(max(mapped_edge), j)
 
-        if (not ([max(edge), min(edge)] in node_mapping)):
-            node_mapping.append([max(edge), min(edge)])
+    if (not ([max(mapped_edge), min(mapped_edge)] in node_mapping)): #DID removed indentation
+        node_mapping.append([max(mapped_edge), min(mapped_edge)])
 
             # if(not G.has_edge(edge[0], j)):
             #     G.add_edge(edge[0], j, weight=)
@@ -182,13 +183,17 @@ def RunIteration(graph):
     BoruvkaStep(graph)
     subgraph = SelectEdgesRandomly(graph)
     if (len(T.edges) == (len(original_G.nodes) - 1)):
-        return
+        print(T.edges)
+        print(tracemalloc.get_traced_memory())
+        tracemalloc.stop()
+        exit()
     RunIteration(subgraph)
 
 def SelectEdgesRandomly(G):
     for edge in G.edges:
         decision = random.randrange(0, 2)
-        print(decision)
+        decision = 1
+        #print(decision)
         if (decision == 1):
             H.add_edge(edge[0], edge[1], weight=G.get_edge_data(edge[0], edge[1])["weight"])
 
@@ -197,9 +202,9 @@ def SelectEdgesRandomly(G):
 
     return H
 
-debug = True
+debug = False
 
-problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/burma14.tsp')
+problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/swiss42.tsp')
 
 G = problem.get_graph() #our starting graph
 T = nx.Graph() #our minimum spanning tree
@@ -342,7 +347,3 @@ if (debug == True):
 
 # while(i < len(G.nodes) - 1):
 #     ExamineEdge()
-
-print(tracemalloc.get_traced_memory())
-
-tracemalloc.stop()
