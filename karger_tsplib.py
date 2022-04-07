@@ -6,7 +6,7 @@ import networkx as nx
 import tracemalloc
 import sys
 
-def BoruvkaStep(G):
+def BoruvkaStep(G, T):
     global node_mapping
     #global G
     nodes_to_be_removed = []
@@ -14,23 +14,26 @@ def BoruvkaStep(G):
     for node in G.nodes:
         edges_to_be_contracted.append(GetMinimumEdge(G, node))
 
-    if (edges_to_be_contracted[0] != None):
-        for edge in edges_to_be_contracted:
-            if (G.has_edge(edge[0], edge[1])):
-                remapped_edge = RemapEdge(edge)
-                #print(remapped_edge_candidates)
-                T.add_edge(remapped_edge[0], remapped_edge[1], weight=original_G.get_edge_data(remapped_edge[0], remapped_edge[1])["weight"])
-                G.remove_edge(edge[0], edge[1])
+    if (len(edges_to_be_contracted) > 0):
+        if (edges_to_be_contracted[0]):
+            for edge in edges_to_be_contracted:
+                if (G.has_edge(edge[0], edge[1])):
+                    remapped_edge = RemapEdge(G, edge)
+                    #print(remapped_edge_candidates)
+                    T.add_edge(remapped_edge[0], remapped_edge[1], weight=original_G.get_edge_data(remapped_edge[0], remapped_edge[1])["weight"])
+                    G.remove_edge(edge[0], edge[1])
 
-        for edge in edges_to_be_contracted:
+            for edge in edges_to_be_contracted:
 
-            node_to_be_removed = Contract(G, edge)
+                node_to_be_removed = Contract(G, edge)
 
-            if (G.has_node(node_to_be_removed)):
-                G.remove_node(node_to_be_removed)
+                if (G.has_node(node_to_be_removed)):
+                    G.remove_node(node_to_be_removed)
 
-                if (debug == True):
-                    DrawGraph(G)
+                    if (debug == True):
+                        DrawGraph(G)
+                    
+    return T
 
         #G.remove_nodes_from(nodes_to_be_removed)
 
@@ -70,7 +73,8 @@ def Contract(G, edge):
         return None
     #print(G.edges(nbunch = [edge[0], edge[1]]))
     #if (mapped_edge[0] in G.nodes and mapped_edge[1] in G.nodes):
-    for j in (original_G.nodes): #TODO check if G nodes works
+    #for j in (original_G.nodes): #TODO check if G nodes works
+    for j in (G.nodes):
         if (j in (edge[0], edge[1], mapped_edge[0], mapped_edge[1])):
             continue
         #if (G.has_edge(mapped_edge[0], j) and G.has_edge(mapped_edge[1], j)): #DID changes this
@@ -154,7 +158,7 @@ def MapEdge(edge):
             break
     return mapped_edge
 
-def RemapEdge(edge):
+def RemapEdge(G, edge):
     remapped_edge_candidates = [[edge[0]], [edge[1]]]
     while (True):
         j = 1
@@ -183,23 +187,25 @@ def RemapEdge(edge):
     
     return remapped_edge
 
-def RunIteration(graph):
+def RunIteration(graph, tree):
     #print(str(len(T.edges)) + " out of " + str(len(original_G.nodes) - 1))
-    BoruvkaStep(graph)
-    BoruvkaStep(graph)
+    tree = BoruvkaStep(graph, tree)
+    tree = BoruvkaStep(graph, tree)
     subgraph = SelectEdgesRandomly(graph)
+    #print(T.edges)
     if (len(T.edges) == (len(original_G.nodes) - 1)):
         print(T.edges)
         print(tracemalloc.get_traced_memory())
         tracemalloc.stop()
         exit()
-    RunIteration(subgraph)
+    forest = RunIteration(subgraph, tree)
+    return forest
 
 def SelectEdgesRandomly(G):
     for edge in G.edges:
         decision = random.randrange(0, 2)
         decision = 1
-        #print(decision)
+        print(decision)
         if (decision == 1):
             H.add_edge(edge[0], edge[1], weight=G.get_edge_data(edge[0], edge[1])["weight"])
 
@@ -210,11 +216,12 @@ def SelectEdgesRandomly(G):
 
 debug = False
 
-problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/st70.tsp')
+problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/gr666.tsp')
 
 G = problem.get_graph() #our starting graph
 T = nx.Graph() #our minimum spanning tree
 H = nx.Graph() #after random selection
+F = nx.Graph() #MSF of H
 
 for i in range(0, len(G.nodes)+1): #removing edges that connect a node to itself
     if (G.has_edge(i, i)):
@@ -231,7 +238,7 @@ node_mapping = []
 if (debug == True):
     DrawGraph(G)
 
-RunIteration(G)
+RunIteration(G, T)
 
 #DRAWING:
 if (debug == True):
