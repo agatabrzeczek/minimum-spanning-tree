@@ -30,8 +30,11 @@ def BoruvkaStep(G, T):
                 if (G.has_node(node_to_be_removed)):
                     G.remove_node(node_to_be_removed)
 
-                    if (debug == True):
-                        DrawGraph(G)
+                    # if (debug == True):
+                    #     DrawGraph(G)
+
+    if (debug == True):
+        DrawGraph(G)
                     
     return T
 
@@ -159,53 +162,101 @@ def MapEdge(edge):
     return mapped_edge
 
 def RemapEdge(G, edge):
-    remapped_edge_candidates = [[edge[0]], [edge[1]]]
-    while (True):
-        j = 1
-        for k in range(0, len(node_mapping)):
-            if (node_mapping[k][1] in remapped_edge_candidates[0] and not(node_mapping[k][0] in remapped_edge_candidates[0])):
-                remapped_edge_candidates[0].append(node_mapping[k][0])
-                j *= 0
-            elif (node_mapping[k][1] in remapped_edge_candidates[1] and not(node_mapping[k][0] in remapped_edge_candidates[1])):
-                remapped_edge_candidates[1].append(node_mapping[k][0])
-                j *= 0
-            elif (node_mapping[k][0] in remapped_edge_candidates[0] and not(node_mapping[k][1] in remapped_edge_candidates[0])):
-                remapped_edge_candidates[0].append(node_mapping[k][1])
-                j *= 0
-            elif (node_mapping[k][0] in remapped_edge_candidates[1] and not(node_mapping[k][1] in remapped_edge_candidates[1])):
-                remapped_edge_candidates[1].append(node_mapping[k][1])
-                j *= 0
-            else:
-                j *= 1
-        if (j == 1):
-            break
-    
-    for node_1 in remapped_edge_candidates[0]:
-        for node_2 in remapped_edge_candidates[1]:
-            if (G.get_edge_data(edge[0], edge[1])["weight"] == original_G.get_edge_data(node_1, node_2)["weight"]):
-                remapped_edge = (node_1, node_2)
-    
-    return remapped_edge
+    possible_remapped_edges = []
+    for original_edge in original_G.edges:
+        if (G.get_edge_data(edge[0], edge[1])["weight"] == original_G.get_edge_data(original_edge[0], original_edge[1])["weight"]):
+            possible_remapped_edges.append(original_edge)
 
-def RunIteration(graph, tree):
+    if (len(possible_remapped_edges) == 1):
+        return possible_remapped_edges[0]
+
+    for possible_edge in possible_remapped_edges:
+        if (edge == possible_edge):
+            return edge
+        
+    for possible_edge in possible_remapped_edges:
+        if (edge[0] == possible_edge[0]):
+            return possible_edge
+
+    for possible_edge in possible_remapped_edges:
+        if (edge[1] == possible_edge[1]):
+            return possible_edge
+
+    return possible_remapped_edges[0]
+
+    # remapped_edge_candidates = [[edge[0]], [edge[1]]]
+    # while (True):
+    #     j = 1
+    #     for k in range(0, len(node_mapping)):
+    #         if (node_mapping[k][1] in remapped_edge_candidates[0] and not(node_mapping[k][0] in remapped_edge_candidates[0])):
+    #             remapped_edge_candidates[0].append(node_mapping[k][0])
+    #             j *= 0
+    #         elif (node_mapping[k][1] in remapped_edge_candidates[1] and not(node_mapping[k][0] in remapped_edge_candidates[1])):
+    #             remapped_edge_candidates[1].append(node_mapping[k][0])
+    #             j *= 0
+    #         elif (node_mapping[k][0] in remapped_edge_candidates[0] and not(node_mapping[k][1] in remapped_edge_candidates[0])):
+    #             remapped_edge_candidates[0].append(node_mapping[k][1])
+    #             j *= 0
+    #         elif (node_mapping[k][0] in remapped_edge_candidates[1] and not(node_mapping[k][1] in remapped_edge_candidates[1])):
+    #             remapped_edge_candidates[1].append(node_mapping[k][1])
+    #             j *= 0
+    #         else:
+    #             j *= 1
+    #     if (j == 1):
+    #         break
+    
+    # for node_1 in remapped_edge_candidates[0]:
+    #     for node_2 in remapped_edge_candidates[1]:
+    #         if (node_1 != node_2 and G.get_edge_data(edge[0], edge[1])["weight"] == original_G.get_edge_data(node_1, node_2)["weight"]):
+    #             remapped_edge = (node_1, node_2)
+    
+    # return remapped_edge
+
+def RunIteration(graph):
+    global T
+    tree = nx.Graph()
     #print(str(len(T.edges)) + " out of " + str(len(original_G.nodes) - 1))
+    #tree = nx.full_join(tree, BoruvkaStep(graph, tree))
+    #tree = nx.full_join(tree, BoruvkaStep(graph, tree))
     tree = BoruvkaStep(graph, tree)
+    #tree = nx.full_join(tree, BoruvkaStep(graph, tree))
     tree = BoruvkaStep(graph, tree)
+
+    T = nx.compose(tree, T)
+
     subgraph = SelectEdgesRandomly(graph)
-    #print(T.edges)
-    if (len(T.edges) == (len(original_G.nodes) - 1)):
-        print(T.edges)
-        print(tracemalloc.get_traced_memory())
-        tracemalloc.stop()
-        exit()
-    forest = RunIteration(subgraph, tree)
+    subgraph_nodes = len(subgraph.nodes)
+    original_subgraph = subgraph.copy() #TODO delete this
+    # if (len(T.edges) == (len(original_G.nodes) - 1)):
+    #     #print(T.edges)
+    #     print(tracemalloc.get_traced_memory())
+    #     tracemalloc.stop()
+    #     exit()
+    if (len(graph.edges) == 0):
+        return tree
+    forest = RunIteration(subgraph)
+    if (len(forest.edges) == (subgraph_nodes - 1) or subgraph_nodes == 0):
+        print(original_subgraph.edges)
+        print(graph.edges)
+        for edge in graph.edges:
+            print(edge)
+            edge = RemapEdge(graph, edge)
+            #edge = (8, 15)
+            print(edge)
+            if(nx.has_path(T, edge[0], edge[1])):
+                shortest_path = nx.shortest_path(T, source=edge[0], target=edge[1])
+                print("the edges in path")
+                for j in range(0, (len(shortest_path)-1)):
+                    print(str(shortest_path[j]) + ", " + str(shortest_path[j+1]))
+                    print(T.get_edge_data(shortest_path[j], shortest_path[j+1])["weight"])
+                print("----")
     return forest
 
 def SelectEdgesRandomly(G):
     for edge in G.edges:
         decision = random.randrange(0, 2)
         decision = 1
-        print(decision)
+        #print(decision)
         if (decision == 1):
             H.add_edge(edge[0], edge[1], weight=G.get_edge_data(edge[0], edge[1])["weight"])
 
@@ -216,7 +267,7 @@ def SelectEdgesRandomly(G):
 
 debug = False
 
-problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/gr666.tsp')
+problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/dantzig42.tsp')
 
 G = problem.get_graph() #our starting graph
 T = nx.Graph() #our minimum spanning tree
@@ -238,7 +289,7 @@ node_mapping = []
 if (debug == True):
     DrawGraph(G)
 
-RunIteration(G, T)
+RunIteration(G)
 
 #DRAWING:
 if (debug == True):
