@@ -6,16 +6,15 @@ import networkx as nx
 import tracemalloc
 import sys
 
-def BoruvkaStep(G):
-    edges = []
-    for edge in G.edges:
-        edges.append([edge[0], edge[1], G.get_edge_data(edge[0], edge[1])["weight"]])
+def BoruvkaStep(edge_list, node_list):
+    #original_edges = edge_list.copy()
+    original_edges = [x[:] for x in edge_list] #copy list of lists
 
     edges_to_be_contracted = []
-    for node in G.nodes:
+    for node in node_list:
         weight = inf
         edge_to_be_contracted = []
-        for edge in edges:
+        for edge in edge_list:
             if (node in [edge[0], edge[1]]):
                 if (edge[2] < weight):
                     edge_to_be_contracted = edge
@@ -24,23 +23,76 @@ def BoruvkaStep(G):
             edges_to_be_contracted.append(edge_to_be_contracted)
 
     for edge_to_be_contracted in edges_to_be_contracted:
-        for i in range(0, len(edges)):
-            if (edges[i] == edge_to_be_contracted):
-                edges[i] = None
+        for i in range(0, len(edge_list)): #deleting edges to be contracted from edge list
+            edge_nodes = [edge_list[i][0], edge_list[i][1]]
+            if (edge_to_be_contracted[0] in edge_nodes):
+                if (edge_to_be_contracted[1] in edge_nodes):
+                    edge_list[i][2] = None
 
     for edge_to_be_contracted in edges_to_be_contracted:
+
+        for i in range(0, len(original_edges)): #mapping edge
+            edge_nodes = [original_edges[i][0], original_edges[i][1]]
+            if (edge_to_be_contracted[0] in edge_nodes):
+                if (edge_to_be_contracted[1] in edge_nodes):
+                    edge_to_be_contracted = edge_list[i]
+
         edges_to_be_updated = []
-        for edge in edges:
-            if (edge != None):
+        for edge in edge_list: #gathering all the edges which have to be updated
+            if (edge[2] != None):
                 edge_nodes = [edge[0], edge[1]]
                 if (edge_to_be_contracted[0] in edge_nodes):
-                    edges_to_be_updated.append(edge)
+                    if (edge_to_be_contracted[1] in edge_nodes):
+                        edge[2] = None 
+                    else:
+                        edges_to_be_updated.append(edge)
                 elif (edge_to_be_contracted[1] in edge_nodes):
                     edges_to_be_updated.append(edge)
 
-        for item in edges_to_be_updated:
-            print(item)
-        print('------')
+        for node in node_list:
+            compared_edges = []
+            if (node in [edge_to_be_contracted[0], edge_to_be_contracted[1]]):
+                continue
+            else:
+                for edge in edges_to_be_updated:
+                    edge_nodes = [edge[0], edge[1]]
+                    if (node in edge_nodes):
+                        compared_edges.append(edge)
+            if (len(compared_edges) == 0):
+                continue
+            else:
+                if (len(compared_edges) == 2 and compared_edges[0][2] == compared_edges[1][2]): #if both edges have the same weight, just throw away the one with the greater node
+                    for i in range(0, len(edge_list)):
+                        edge_nodes = [edge_list[i][0], edge_list[i][1]]
+                        if (node in edge_nodes):
+                            if (max([edge_to_be_contracted[0], edge_to_be_contracted[1]]) in edge_nodes):
+                                edge_list[i][0] = min([edge_to_be_contracted[0], edge_to_be_contracted[1]])
+                                edge_list[i][1] = node
+                                edge_list[i][2] = None
+                else:
+                    if (len(compared_edges) == 1):
+                        new_weight = compared_edges[0][2]
+                    elif (compared_edges[0][2] < compared_edges[1][2]):
+                        new_weight = compared_edges[0][2]
+                    else:
+                        new_weight = compared_edges[1][2]
+                    for i in range(0, len(edge_list)): #updating edges
+                        edge_nodes = [edge_list[i][0], edge_list[i][1]]
+                        if (node in edge_nodes):
+                            if (max([edge_to_be_contracted[0], edge_to_be_contracted[1]]) in edge_nodes):
+                                edge_list[i][0] = min([edge_to_be_contracted[0], edge_to_be_contracted[1]])
+                                edge_list[i][1] = node
+                                if (edge_list[i][2] != new_weight):
+                                    edge_list[i][2] = None
+                            elif (min([edge_to_be_contracted[0], edge_to_be_contracted[1]]) in edge_nodes):
+                                if (edge_list[i][2] != new_weight):
+                                    edge_list[i][2] = None
+
+    for edge in edge_list:
+        if (edge[2] != None):
+            print(edge)
+
+        
 
     if (debug == True):
         DrawGraph(G)
@@ -82,15 +134,15 @@ def DrawGraph(G): #DRAWING
 
     current_suplot += 1
 
-def Run(G):
-    G, T = BoruvkaStep(G)
+def Run(edge_list, node_list):
+    contracted_G, T_edges = BoruvkaStep(edge_list, node_list)
 
 debug = False
 
 problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/burma14.tsp')
 
 G = problem.get_graph() #our starting graph
-original_G = G.copy()
+#original_G = G.copy()
 
 for i in range(0, len(G.nodes)+1): #removing edges that connect a node to itself
     if (G.has_edge(i, i)):
@@ -98,11 +150,17 @@ for i in range(0, len(G.nodes)+1): #removing edges that connect a node to itself
 
 tracemalloc.start()
 
+G_edges = [] #converting networkx graph to list of edges
+for edge in G.edges:
+    G_edges.append([edge[0], edge[1], G.get_edge_data(edge[0], edge[1])["weight"]])
+
+G_nodes = G.nodes
+
 #DRAWING:
 if (debug == True):
     DrawGraph(G)
 
-Run(G)
+Run(G_edges, G_nodes)
 
 #DRAWING:
 if (debug == True):
