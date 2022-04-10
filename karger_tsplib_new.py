@@ -7,7 +7,8 @@ import tracemalloc
 import sys
 
 def BoruvkaStep(edge_list, node_list):
-    #original_edges = edge_list.copy()
+    #starting edges are edges at the start of whole program, original edges are edges at the start of boruvka step
+    global starting_edges
     original_edges = [x[:] for x in edge_list] #copy list of lists
 
     edges_to_be_contracted = []
@@ -17,7 +18,7 @@ def BoruvkaStep(edge_list, node_list):
         for edge in edge_list:
             if (node in [edge[0], edge[1]]):
                 if (edge[2] < weight):
-                    edge_to_be_contracted = edge
+                    edge_to_be_contracted = edge.copy()
                     weight = edge[2]
         if (edge_to_be_contracted not in edges_to_be_contracted):
             edges_to_be_contracted.append(edge_to_be_contracted)
@@ -29,13 +30,15 @@ def BoruvkaStep(edge_list, node_list):
                 if (edge_to_be_contracted[1] in edge_nodes):
                     edge_list[i][2] = None
 
+    tree_index_list = []
     for edge_to_be_contracted in edges_to_be_contracted:
 
         for i in range(0, len(original_edges)): #mapping edge
             edge_nodes = [original_edges[i][0], original_edges[i][1]]
             if (edge_to_be_contracted[0] in edge_nodes):
                 if (edge_to_be_contracted[1] in edge_nodes):
-                    edge_to_be_contracted = edge_list[i]
+                    edge_to_be_contracted = edge_list[i].copy()
+                    tree_index_list.append(i)
 
         edges_to_be_updated = []
         for edge in edge_list: #gathering all the edges which have to be updated
@@ -88,16 +91,16 @@ def BoruvkaStep(edge_list, node_list):
                                 if (edge_list[i][2] != new_weight):
                                     edge_list[i][2] = None
 
-    for edge in edge_list:
-        if (edge[2] != None):
-            print(edge)
-
-        
+    tree_edges = []
+    for edge in edges_to_be_contracted:
+        for i in range(0, len(edge_list)):
+            if (original_edges[i] == edge):
+                tree_edges.append(starting_edges[i])
 
     if (debug == True):
         DrawGraph(G)
 
-    return G, None
+    return edge_list, tree_edges
 
 def DrawGraph(G): #DRAWING
     global current_suplot
@@ -136,10 +139,11 @@ def DrawGraph(G): #DRAWING
 
 def Run(edge_list, node_list):
     contracted_G, T_edges = BoruvkaStep(edge_list, node_list)
+    print(T_edges)
 
 debug = False
 
-problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/burma14.tsp')
+problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/gr202.tsp')
 
 G = problem.get_graph() #our starting graph
 #original_G = G.copy()
@@ -153,6 +157,7 @@ tracemalloc.start()
 G_edges = [] #converting networkx graph to list of edges
 for edge in G.edges:
     G_edges.append([edge[0], edge[1], G.get_edge_data(edge[0], edge[1])["weight"]])
+starting_edges = [x[:] for x in G_edges]
 
 G_nodes = G.nodes
 
