@@ -139,7 +139,6 @@ def DrawGraph(G): #DRAWING
 
 def Run(edge_list, node_list):
     contracted_G, T_edges = BoruvkaStep(edge_list, node_list)
-    print(T_edges)
 
 debug = False
 
