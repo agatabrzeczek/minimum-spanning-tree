@@ -144,27 +144,51 @@ def DrawGraph(G): #DRAWING
 
     current_suplot += 1
 
+def SelectRandomEdges(edge_list):
+    selected_edges = []
+
+    for edge in edge_list:
+        decision = random.randrange(0, 2)
+        if (decision == 1):
+            selected_edges.append(edge)
+        else:
+            selected_edges.append([edge[0], edge[1], None])
+
+    return selected_edges
+
 def Run(edge_list):
     done = False
     tree_edges = [] #we will be adding to this tree w each iteration
     while (done == False):
-        contracted_G, new_tree_edges = BoruvkaStep(edge_list)
+        contracted_G, new_tree_edges = BoruvkaStep(edge_list) #first Boruvka step
         tree_edges += new_tree_edges
         edge_list = contracted_G
-        contracted_G, new_tree_edges = BoruvkaStep(edge_list)
+        contracted_G, new_tree_edges = BoruvkaStep(edge_list) #second Boruvka step
         tree_edges += new_tree_edges
+        ##debug
+        for edge in edge_list:
+            if (edge[2] != None):
+                print(edge)
+        print("-----")
+        ##debug
+        subgraph_H = SelectRandomEdges(contracted_G)
+        ##debug
+        for edge in subgraph_H:
+            if (edge[2] != None):
+                print(edge)
+        ##debug
         done = True #first we assume that the tree is completed...
         for edge in contracted_G:
             if (edge[2] != None):
                 done = False #...and if not, we reset the flag to False
-                edge_list = contracted_G
+                edge_list = subgraph_H
                 break
     print(tree_edges)
         
 
 debug = False
 
-problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/bayg29.tsp')
+problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/brazil58.tsp')
 
 G = problem.get_graph() #our starting graph
 #original_G = G.copy()
