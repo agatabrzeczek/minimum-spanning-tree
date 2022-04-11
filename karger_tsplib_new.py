@@ -1,5 +1,6 @@
 from cmath import inf
 import random
+from numpy import maximum
 import tsplib95
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -109,6 +110,29 @@ def BoruvkaStep(edge_list):
 
     return edge_list, tree_edges
 
+def DeleteFHeavyEdges(graph, forest):
+
+    networkx_forest = nx.Graph()
+    for edge in forest:
+        networkx_forest.add_edge(edge[0], edge[1], weight = edge[2])
+
+    for edge in graph:
+        if (edge[2] != None):
+            maximum_weight = 0
+            weight_graph = edge[2]
+            if (nx.has_path(networkx_forest, edge[0], edge[1])):
+                path = nx.shortest_path(networkx_forest, source=edge[0], target=edge[1])
+                for i in range(0, (len(path)-1)):
+                    weight_forest = networkx_forest.get_edge_data(path[i], path[i+1])["weight"]
+                    if (weight_forest > maximum_weight):
+                        maximum_weight = weight_forest
+            else:
+                maximum_weight = inf
+            if (weight_graph > maximum_weight):
+                edge[2] = None
+
+    return graph
+
 def DrawGraph(G): #DRAWING
     global current_suplot
     #global G
@@ -157,38 +181,48 @@ def SelectRandomEdges(edge_list):
     return selected_edges
 
 def Run(edge_list):
-    done = False
+    node_list = [] #deriving node list from edge list
+    for edge in edge_list:
+        if (edge[0] not in node_list and edge[2] != None):
+            node_list.append(edge[0])
+        if (edge[1] not in node_list and edge[2] != None):
+            node_list.append(edge[1])
+
+    all_done = False #if True the MST has been computed
     tree_edges = [] #we will be adding to this tree w each iteration
-    while (done == False):
-        contracted_G, new_tree_edges = BoruvkaStep(edge_list) #first Boruvka step
-        tree_edges += new_tree_edges
-        edge_list = contracted_G
-        contracted_G, new_tree_edges = BoruvkaStep(edge_list) #second Boruvka step
-        tree_edges += new_tree_edges
-        ##debug
-        for edge in edge_list:
-            if (edge[2] != None):
-                print(edge)
-        print("-----")
-        ##debug
-        subgraph_H = SelectRandomEdges(contracted_G)
-        ##debug
-        for edge in subgraph_H:
-            if (edge[2] != None):
-                print(edge)
-        ##debug
-        done = True #first we assume that the tree is completed...
-        for edge in contracted_G:
-            if (edge[2] != None):
-                done = False #...and if not, we reset the flag to False
-                edge_list = subgraph_H
-                break
-    print(tree_edges)
+    graph_before_random_selection = []
+    while (all_done == False):
+        done = False #if true the MSF of subgraph has been computed
+        while (done == False):
+            contracted_G, new_tree_edges = BoruvkaStep(edge_list) #first Boruvka step
+            tree_edges += new_tree_edges
+
+            edge_list = contracted_G
+            contracted_G, new_tree_edges = BoruvkaStep(edge_list) #second Boruvka step
+            tree_edges += new_tree_edges
+
+            if (len(graph_before_random_selection) == 0):
+                graph_before_random_selection = [x[:] for x in contracted_G]
+
+            subgraph_H = SelectRandomEdges(contracted_G)
+
+            done = True #first we assume that the tree is completed...
+            for edge in contracted_G:
+                if (edge[2] != None):
+                    done = False #...and if not, we reset the flag to False
+                    edge_list = subgraph_H
+                    break
         
+        contracted_G = DeleteFHeavyEdges(graph_before_random_selection, tree_edges)
+        edge_list = contracted_G
+
+        if (len(tree_edges) == (len(node_list) - 1)):
+            print(tree_edges)
+            all_done = True
 
 debug = False
 
-problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/brazil58.tsp')
+problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/gr96.tsp')
 
 G = problem.get_graph() #our starting graph
 #original_G = G.copy()
