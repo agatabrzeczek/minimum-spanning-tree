@@ -150,9 +150,6 @@ def Run(edge_list):
     while (done == False):
         contracted_G, new_tree_edges = BoruvkaStep(edge_list)
         tree_edges += new_tree_edges
-        edge_list = contracted_G
-        contracted_G, new_tree_edges = BoruvkaStep(edge_list)
-        tree_edges += new_tree_edges
         done = True #first we assume that the tree is completed...
         for edge in contracted_G:
             if (edge[2] != None):
@@ -164,7 +161,7 @@ def Run(edge_list):
 
 debug = False
 
-problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/bayg29.tsp')
+problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/burma14.tsp')
 
 G = problem.get_graph() #our starting graph
 #original_G = G.copy()
