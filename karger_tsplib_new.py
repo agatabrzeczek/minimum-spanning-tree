@@ -12,6 +12,16 @@ def BoruvkaStep(edge_list):
     global starting_edges
     original_edges = [x[:] for x in edge_list] #copy list of lists
 
+    debug_list = []
+    for i in range (0, len(edge_list)):
+        if (edge_list[i][2] != None):
+            debug_list.append(edge_list[i] + [i])
+    if (len(debug_list) <= 15):
+        print("-----")
+        for item in debug_list:
+            print(item)
+        print("-----")
+
     node_list = [] #deriving node list from edge list
     for edge in edge_list:
         if (edge[0] not in node_list and edge[2] != None):
@@ -43,7 +53,8 @@ def BoruvkaStep(edge_list):
 
         for i in range(0, len(original_edges)): #mapping edge
             edge_nodes = [original_edges[i][0], original_edges[i][1]]
-            if (edge_to_be_contracted[0] in edge_nodes):
+            edge_weight = original_edges[i][2]
+            if (edge_to_be_contracted[0] in edge_nodes and edge_weight != None):
                 if (edge_to_be_contracted[1] in edge_nodes):
                     edge_to_be_contracted = edge_list[i].copy()
                     tree_index_list.append(i)
@@ -69,8 +80,13 @@ def BoruvkaStep(edge_list):
                     edge_nodes = [edge[0], edge[1]]
                     if (node in edge_nodes):
                         compared_edges.append(edge)
-            if (len(compared_edges) == 0):
-                continue
+            if (len(compared_edges) == 0): #DID
+                for i in range(0, len(edge_list)):
+                    edge_nodes = [edge_list[i][0], edge_list[i][1]]
+                    if (node in edge_nodes):
+                        if (max([edge_to_be_contracted[0], edge_to_be_contracted[1]]) in edge_nodes):
+                            edge_list[i][0] = min([edge_to_be_contracted[0], edge_to_be_contracted[1]])
+                            edge_list[i][1] = node
             else:
                 if (len(compared_edges) == 2 and compared_edges[0][2] == compared_edges[1][2]): #if both edges have the same weight, just throw away the one with the greater node
                     for i in range(0, len(edge_list)):
@@ -99,6 +115,16 @@ def BoruvkaStep(edge_list):
                                 if (edge_list[i][2] != new_weight):
                                     edge_list[i][2] = None
 
+        debug_list = []
+        for i in range (0, len(edge_list)):
+            if (edge_list[i][2] != None):
+                debug_list.append(edge_list[i] + [i])
+        if (len(debug_list) <= 15):
+            print("-----")
+            for item in debug_list:
+                print(item)
+            print("-----")
+
     tree_edges = []
     for edge in edges_to_be_contracted:
         for i in range(0, len(edge_list)):
@@ -110,26 +136,51 @@ def BoruvkaStep(edge_list):
 
     return edge_list, tree_edges
 
-def DeleteFHeavyEdges(graph, forest):
+def CheckConnectedness(forest):
 
     networkx_forest = nx.Graph()
     for edge in forest:
-        networkx_forest.add_edge(edge[0], edge[1], weight = edge[2])
+        if (edge[2] != None):
+            networkx_forest.add_edge(edge[0], edge[1], weight = edge[2])
 
-    for edge in graph:
+    return nx.is_connected(networkx_forest)
+
+
+def DeleteFHeavyEdges(graph, forest):
+    global f_heavy_edge_indices
+
+    networkx_forest = nx.Graph()
+    for edge in forest:
+        if (edge[2] != None):
+            networkx_forest.add_edge(edge[0], edge[1], weight = edge[2])
+
+    for i in range(0, len(graph)):
+    #for edge in graph:
+        edge = graph[i]
         if (edge[2] != None):
             maximum_weight = 0
             weight_graph = edge[2]
-            if (nx.has_path(networkx_forest, edge[0], edge[1])):
-                path = nx.shortest_path(networkx_forest, source=edge[0], target=edge[1])
-                for i in range(0, (len(path)-1)):
-                    weight_forest = networkx_forest.get_edge_data(path[i], path[i+1])["weight"]
-                    if (weight_forest > maximum_weight):
-                        maximum_weight = weight_forest
+            if (networkx_forest.has_node(edge[0]) and networkx_forest.has_node(edge[1])):
+                if (nx.has_path(networkx_forest, edge[0], edge[1])):
+                    path = nx.shortest_path(networkx_forest, source=edge[0], target=edge[1])
+                    for i in range(0, (len(path)-1)):
+                        weight_forest = networkx_forest.get_edge_data(path[i], path[i+1])["weight"]
+                        if (weight_forest > maximum_weight):
+                            maximum_weight = weight_forest
+                else:
+                    maximum_weight = inf
             else:
                 maximum_weight = inf
             if (weight_graph > maximum_weight):
-                edge[2] = None
+                if (i not in f_heavy_edge_indices):
+                    f_heavy_edge_indices.append(i)
+                    #edge[2] = None
+
+    #graph = [x[:] for x in starting_edges]
+
+    for i in range(0, len(graph)): #DID
+        if (i in f_heavy_edge_indices):
+            graph[i][2] = None
 
     return graph
 
@@ -190,39 +241,70 @@ def Run(edge_list):
 
     all_done = False #if True the MST has been computed
     tree_edges = [] #we will be adding to this tree w each iteration
-    graph_before_random_selection = []
     while (all_done == False):
         done = False #if true the MSF of subgraph has been computed
+        forest_edges = []
+        boruvka_edges = []
+        graph_before_random_selection = []
         while (done == False):
-            contracted_G, new_tree_edges = BoruvkaStep(edge_list) #first Boruvka step
-            tree_edges += new_tree_edges
+            edge_list, new_tree_edges = BoruvkaStep(edge_list) #first Boruvka step
+            forest_edges += new_tree_edges
 
-            edge_list = contracted_G
-            contracted_G, new_tree_edges = BoruvkaStep(edge_list) #second Boruvka step
-            tree_edges += new_tree_edges
+            edge_list, new_tree_edges = BoruvkaStep(edge_list) #second Boruvka step
+            forest_edges += new_tree_edges
 
-            if (len(graph_before_random_selection) == 0):
-                graph_before_random_selection = [x[:] for x in contracted_G]
+            #print(tree_edges)
+            # for edge in edge_list:
+            #     if (edge[2] != None):
+            #         print(edge)
+            # print("-----")
+            # if (len(tree_edges) == 0):
+            #     tree_edges = forest_edges
 
-            subgraph_H = SelectRandomEdges(contracted_G)
+            if (len(boruvka_edges) == 0): #only done for first iteration of loop
+                boruvka_edges = forest_edges.copy()
+
+            if (len(graph_before_random_selection) == 0): #only done for first iteration of loop
+                graph_before_random_selection = [x[:] for x in edge_list]
 
             done = True #first we assume that the tree is completed...
-            for edge in contracted_G:
+            for edge in edge_list:
                 if (edge[2] != None):
                     done = False #...and if not, we reset the flag to False
-                    edge_list = subgraph_H
+                    #TODO CHECK CONTRACTED EDGES, RESET TREE EDGES
+                    #debug_edge_list = [[1, 2, 1115], [2, 54, 3094], [1, 17, 3615], [17, 54, 1272], [59, 17, 1060], [1, 11, 706], [1, 59, 3906], [1, 71, 4685], [54, 1, 2540], [11, 59, 1568], [11, 71, 2402], [78, 11, 2659], [59, 54, 774], [59, 71, 849]]
+                    # for edge in edge_list:
+                    #     if (edge not in debug_edge_list):
+                    #         edge[2] = None
+                    edge_list = SelectRandomEdges(edge_list)
+                    # for edge in edge_list:
+                    #     if (edge[2] != None):
+                    #         print(edge)
                     break
-        
-        contracted_G = DeleteFHeavyEdges(graph_before_random_selection, tree_edges)
-        edge_list = contracted_G
 
-        if (len(tree_edges) == (len(node_list) - 1)):
+        # if (CheckConnectedness(forest_edges) and len(forest_edges) == (len(node_list) - 1)):
+        #     print(forest_edges)
+        #     all_done = True
+
+        tree_edges += boruvka_edges
+
+        if(len(tree_edges) == (len(node_list))-1):
             print(tree_edges)
             all_done = True
+        
+        edge_list = DeleteFHeavyEdges(graph_before_random_selection, forest_edges)
+
+        # counter = 0 #count the remaining edges
+        # for edge in edge_list:
+        #     if (edge[2] != None):
+        #         counter += 1
+        # if (counter == (len(node_list) - 1)):
+        #     print(forest_edges)
+        #     all_done = True
 
 debug = False
 
-problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/gr96.tsp')
+problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/u2152.tsp')
 
 G = problem.get_graph() #our starting graph
 #original_G = G.copy()
@@ -237,6 +319,7 @@ G_edges = [] #converting networkx graph to list of edges
 for edge in G.edges:
     G_edges.append([edge[0], edge[1], G.get_edge_data(edge[0], edge[1])["weight"]])
 starting_edges = [x[:] for x in G_edges]
+f_heavy_edge_indices = []
 
 G_nodes = G.nodes
 

@@ -161,7 +161,7 @@ def Run(edge_list):
 
 debug = False
 
-problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/burma14.tsp')
+problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/gr96.tsp')
 
 G = problem.get_graph() #our starting graph
 #original_G = G.copy()

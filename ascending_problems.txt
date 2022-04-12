@@ -14,3 +14,7 @@ eil51
 berlin52
 brazil58
 st70
+pr76
+eil76
+gr96 - tree w 96 edges
+rat99
