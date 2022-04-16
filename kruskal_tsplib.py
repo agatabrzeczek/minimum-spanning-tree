@@ -9,33 +9,44 @@ def DrawGraph(): #DRAWING
     subax2 = plt.subplot(111)
 
     pos = nx.spring_layout(G, seed=my_seed)  # positions for all nodes - seed for reproducibility
-    nx.draw_networkx_nodes(G, pos, node_size=20)
+    nx.draw_networkx_nodes(G, pos, node_size=160)
     nx.draw_networkx_edges(G, pos, edgelist=G.edges, width=1)
     nx.draw_networkx_edges(G, pos, edgelist=T.edges, width=1, edge_color="green")
-    nx.draw_networkx_labels(G, pos, font_size=2, font_family="sans-serif")
-    nx.draw_networkx_edge_labels(G, pos, nx.get_edge_attributes(G, 'weight'), font_size=2)
+    nx.draw_networkx_labels(G, pos, font_size=8, font_family="sans-serif")
+    nx.draw_networkx_edge_labels(G, pos, nx.get_edge_attributes(G, 'weight'), font_size=4)
 
-    plt.savefig('savefig/subplot_' + str(current_suplot) + '.png', dpi=600)
+    plt.savefig('savefig/kruskal/subplot_' + str(current_suplot) + '.png', dpi=600)
 
     current_suplot += 1
 
-def ExamineEdge():
-    global i
-    
-    T.add_edge(edges[0][0], edges[0][1], weight = edges[0][2]) #temporarily adding the edge to the MST
+def ExamineEdge(edge, T):
+
+    T.add_edge(edge[0], edge[1], weight = edge[2]) #temporarily adding the edge to the MST
 
     if (len(nx.cycle_basis(T)) == 0):
-        i += 1
-        DrawGraph() #DRAWING
+        return True, T
     else:
-        T.remove_edge(edges[0][0], edges[0][1])
-
-    edges.pop(0)
+        T.remove_edge(edge[0], edge[1])
+        return False, T
 
 def GetWeight(edge):
     return edge[2]
 
-def SortEdges():
+def Run(G):
+    T = nx.Graph() #our minimum spanning tree
+
+    edges = SortEdges(G)
+
+    i = 0
+    while(i < len(G.nodes) - 1):
+        added, T = ExamineEdge(edges[0], T)
+        if (added == True):
+            i += 1
+        edges.pop(0)
+
+    return T
+
+def SortEdges(G):
     edge_list = []
 
     for edge_tuple in G.edges:
@@ -49,29 +60,29 @@ def SortEdges():
 
     return edge_list
 
-tracemalloc.start()
+# debug = False
 
-problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/burma14.tsp')
+# problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/burma14.tsp')
 
-G = problem.get_graph() #our starting graph
-T = nx.Graph() #our minimum spanning tree
+# G = problem.get_graph() #our starting graph
+# T = nx.Graph() #our minimum spanning tree
 
-for i in range(0, len(G.nodes)+1): #removing edges that connect a node to itself
-    if (G.has_edge(i, i)):
-        G.remove_edge(i, i)
+# for i in range(0, len(G.nodes)+1): #removing edges that connect a node to itself
+#     if (G.has_edge(i, i)):
+#         G.remove_edge(i, i)
 
-edges = SortEdges()
+# tracemalloc.start()
 
-i = 0
+# i = 0
 
-#DRAWING:
-my_seed = 6
-current_suplot = 1
-DrawGraph()
+# #DRAWING:
+# if (debug == True):
+#     my_seed = 6
+#     current_suplot = 1
+#     DrawGraph()
 
-while(i < len(G.nodes) - 1):
-    ExamineEdge()
+# Run(G)
 
-print(tracemalloc.get_traced_memory())
+# print(tracemalloc.get_traced_memory())
 
-tracemalloc.stop()
+# tracemalloc.stop()
