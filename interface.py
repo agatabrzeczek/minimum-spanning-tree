@@ -4,6 +4,7 @@ import random
 import tsplib95
 import networkx as nx
 import kruskal_tsplib
+import karger_tsplib
 
 def CheckMSTCorrectness(mst, G):
     actual_mst = nx.minimum_spanning_tree(G, algorithm="boruvka", weight="weight")
@@ -77,7 +78,7 @@ while (more_problems == 'Y' or more_problems == 'y'):
             more_problems = input("Would you like to choose more problems? (Y, N) Default choice is no. ")
 
 for i in range(0, len(chosen_problem_nos)):
-    if (chosen_problem_nos[i] == 'R'):
+    if (chosen_problem_nos[i] == 'R' or chosen_problem_nos[i] == 'r'):
         choose_random_problem = True
         while (choose_random_problem):
             random_problem = random.randrange(1, (len(problem_list)+1))
@@ -98,11 +99,21 @@ for problem in chosen_problems:
     T = nx.Graph() #our minimum spanning tree
 
     if ('1' in chosen_algorithms):
-        print("Running Kruskal algorithm this problem")
+        print("Running Kruskal algorithm for this problem")
         kruskal_mst = kruskal_tsplib.Run(G)
         print("The result is:")
         print(kruskal_mst.edges)
         if (CheckMSTCorrectness(kruskal_mst, G)):
+            print("This result is correct")
+        else:
+            print("This result is incorrect")
+
+    if ('2' in chosen_algorithms):
+        print("Running Karger algorithm for this problem")
+        karger_mst = karger_tsplib.Run(G)
+        print("The result is:")
+        print(karger_mst.edges)
+        if (CheckMSTCorrectness(karger_mst, G)):
             print("This result is correct")
         else:
             print("This result is incorrect")
