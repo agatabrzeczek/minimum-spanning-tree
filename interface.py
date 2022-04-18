@@ -5,6 +5,7 @@ import tsplib95
 import networkx as nx
 import kruskal_tsplib
 import karger_tsplib
+import boruvka_tsplib
 
 def CheckMSTCorrectness(mst, G):
     actual_mst = nx.minimum_spanning_tree(G, algorithm="boruvka", weight="weight")
@@ -34,6 +35,7 @@ karger = False
 print("available algorithms:")
 print("1. Kruskal")
 print("2. Karger")
+print("3. Boruvka")
 chosen_algorithms = input("Which algorithms would you like to run? ")
 
 print("available problems:")
@@ -65,7 +67,8 @@ while (more_problems == 'Y' or more_problems == 'y'):
     chosen_problem = input("Please select a problem (Enter 'R' for random problem) ")
     try:
         chosen_problem = int(chosen_problem)
-        if (chosen_problem not in range (1, (len(problem_list)+1))):
+        #if (chosen_problem not in range (1, (len(problem_list)+1))):
+        if (chosen_problem not in range (1, 93)):
             print("This is not a valid choice. Please enter a number 1 - 112 or 'R'")
         else:
             chosen_problem_nos.append(chosen_problem)
@@ -118,8 +121,18 @@ for problem in chosen_problems:
         else:
             print("This result is incorrect")
 
-print(chosen_algorithms)
-print(chosen_problems)
+    if ('3' in chosen_algorithms):
+        print("Running Boruvka algorithm for this problem")
+        boruvka_mst = boruvka_tsplib.Run(G)
+        print("The result is:")
+        print(boruvka_mst.edges)
+        if (CheckMSTCorrectness(boruvka_mst, G)):
+            print("This result is correct")
+        else:
+            print("This result is incorrect")
+
+# print(chosen_algorithms)
+# print(chosen_problems)
 
 # problem_sizes = []
 # problem_size = ''

@@ -4,11 +4,10 @@ import tsplib95
 import matplotlib.pyplot as plt
 import networkx as nx
 import tracemalloc
-import sys
+import math
 
-def BoruvkaStep(edge_list):
+def BoruvkaStep(edge_list, starting_edges):
     #starting edges are edges at the start of whole program, original edges are edges at the start of boruvka step
-    global starting_edges
     original_edges = [x[:] for x in edge_list] #copy list of lists
 
     node_list = [] #deriving node list from edge list
@@ -42,7 +41,8 @@ def BoruvkaStep(edge_list):
 
         for i in range(0, len(original_edges)): #mapping edge
             edge_nodes = [original_edges[i][0], original_edges[i][1]]
-            if (edge_to_be_contracted[0] in edge_nodes):
+            edge_weight = original_edges[i][2]
+            if (edge_to_be_contracted[0] in edge_nodes and edge_weight != None):
                 if (edge_to_be_contracted[1] in edge_nodes):
                     edge_to_be_contracted = edge_list[i].copy()
                     tree_index_list.append(i)
@@ -68,8 +68,13 @@ def BoruvkaStep(edge_list):
                     edge_nodes = [edge[0], edge[1]]
                     if (node in edge_nodes):
                         compared_edges.append(edge)
-            if (len(compared_edges) == 0):
-                continue
+            if (len(compared_edges) == 0): #DID
+                for i in range(0, len(edge_list)):
+                    edge_nodes = [edge_list[i][0], edge_list[i][1]]
+                    if (node in edge_nodes):
+                        if (max([edge_to_be_contracted[0], edge_to_be_contracted[1]]) in edge_nodes):
+                            edge_list[i][0] = min([edge_to_be_contracted[0], edge_to_be_contracted[1]])
+                            edge_list[i][1] = node
             else:
                 if (len(compared_edges) == 2 and compared_edges[0][2] == compared_edges[1][2]): #if both edges have the same weight, just throw away the one with the greater node
                     for i in range(0, len(edge_list)):
@@ -104,87 +109,51 @@ def BoruvkaStep(edge_list):
             if (original_edges[i] == edge):
                 tree_edges.append(starting_edges[i])
 
-    if (debug == True):
-        DrawGraph(G)
-
     return edge_list, tree_edges
 
-def DrawGraph(G): #DRAWING
-    global current_suplot
-    #global G
-    my_seed = 6
+def Run(G):
 
-    pos = nx.spring_layout(G, seed=my_seed)  # positions for all nodes - seed for reproducibility
-    nx.draw_networkx_nodes(G, pos, node_size=160)
-    nx.draw_networkx_edges(G, pos, edgelist=G.edges, width=1)
-    nx.draw_networkx_labels(G, pos, font_size=8, font_family="sans-serif")
-    nx.draw_networkx_edge_labels(G, pos, nx.get_edge_attributes(G, 'weight'), font_size=4)
+    for i in range(0, len(G.nodes)+1): #removing edges that connect a node to itself
+        if (G.has_edge(i, i)):
+            G.remove_edge(i, i)
 
-    plt.savefig('savefig/karger/boruvka_steps/subplot_' + str(current_suplot) + '.png', dpi=600)
-    plt.clf()
+    edge_list = [] #converting networkx graph to list of edges
+    for edge in G.edges:
+        edge_list.append([edge[0], edge[1], G.get_edge_data(edge[0], edge[1])["weight"]])
+    starting_edges = [x[:] for x in edge_list]
 
-    posT = nx.spring_layout(original_G, seed=my_seed)
-    nx.draw_networkx_nodes(original_G, posT, node_size=160)
-    #nx.draw_networkx_edges(original_G, posT, edgelist=original_G.edges, width=1)
-    nx.draw_networkx_edges(original_G, posT, edgelist=T.edges, width=1, edge_color="green")
-    nx.draw_networkx_labels(original_G, posT, font_size=8, font_family="sans-serif")
-    nx.draw_networkx_edge_labels(original_G, posT, nx.get_edge_attributes(original_G, 'weight'), font_size=4)
+    node_list = [] #deriving node list from edge list
+    for edge in edge_list:
+        if (edge[0] not in node_list and edge[2] != None):
+            node_list.append(edge[0])
+        if (edge[1] not in node_list and edge[2] != None):
+            node_list.append(edge[1])
 
-    plt.savefig('savefig/karger/mst/subplot_' + str(current_suplot) + '.png', dpi=600)
-    plt.clf()
-
-    pos = nx.spring_layout(G, seed=my_seed)  # positions for all nodes - seed for reproducibility
-    nx.draw_networkx_nodes(G, pos, node_size=160)
-    nx.draw_networkx_edges(G, pos, edgelist=H.edges, width=1)
-    nx.draw_networkx_labels(G, pos, font_size=8, font_family="sans-serif")
-    nx.draw_networkx_edge_labels(G, pos, nx.get_edge_attributes(H, 'weight'), font_size=4)
-
-    plt.savefig('savefig/karger/random_selection/subplot_' + str(current_suplot) + '.png', dpi=600)
-    plt.clf()
-
-    current_suplot += 1
-
-def Run(edge_list):
-    done = False
     tree_edges = [] #we will be adding to this tree w each iteration
+    done = False
     while (done == False):
-        contracted_G, new_tree_edges = BoruvkaStep(edge_list)
+        edge_list, new_tree_edges = BoruvkaStep(edge_list, starting_edges) #first Boruvka step
         tree_edges += new_tree_edges
-        done = True #first we assume that the tree is completed...
-        for edge in contracted_G:
-            if (edge[2] != None):
-                done = False #...and if not, we reset the flag to False
-                edge_list = contracted_G
-                break
-    print(tree_edges)
-        
 
-debug = False
+        percentage = math.ceil((len(tree_edges)/(len(node_list) - 1))*100)
+        print(f"The MST is {percentage}% done.")
 
-problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/gr96.tsp')
+        if(len(tree_edges) == (len(node_list))-1):
+            done = True
 
-G = problem.get_graph() #our starting graph
-#original_G = G.copy()
+    networkx_mst = nx.Graph()
+    for edge in tree_edges:
+        if (edge[2] != None):
+            networkx_mst.add_edge(edge[0], edge[1], weight = edge[2])
 
-for i in range(0, len(G.nodes)+1): #removing edges that connect a node to itself
-    if (G.has_edge(i, i)):
-        G.remove_edge(i, i)
+    return networkx_mst
 
-tracemalloc.start()
+# debug = False
 
-G_edges = [] #converting networkx graph to list of edges
-for edge in G.edges:
-    G_edges.append([edge[0], edge[1], G.get_edge_data(edge[0], edge[1])["weight"]])
-starting_edges = [x[:] for x in G_edges]
+# problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/burma14.tsp')
 
-G_nodes = G.nodes
+# G = problem.get_graph() #our starting graph
 
-#DRAWING:
-if (debug == True):
-    DrawGraph(G)
+# tracemalloc.start()
 
-Run(G_edges)
-
-#DRAWING:
-if (debug == True):
-    DrawGraph(G)
+# Run(G)
