@@ -129,13 +129,15 @@ def Run(G):
         if (edge[1] not in node_list and edge[2] != None):
             node_list.append(edge[1])
 
+    tracemalloc.start()
+
     tree_edges = [] #we will be adding to this tree w each iteration
     done = False
     while (done == False):
         edge_list, new_tree_edges = BoruvkaStep(edge_list, starting_edges) #first Boruvka step
         tree_edges += new_tree_edges
 
-        percentage = math.ceil((len(tree_edges)/(len(node_list) - 1))*100)
+        percentage = math.floor((len(tree_edges)/(len(node_list) - 1))*100)
         print(f"The MST is {percentage}% done.")
 
         if(len(tree_edges) == (len(node_list))-1):
@@ -146,7 +148,10 @@ def Run(G):
         if (edge[2] != None):
             networkx_mst.add_edge(edge[0], edge[1], weight = edge[2])
 
-    return networkx_mst
+    memory_consumption = tracemalloc.get_traced_memory()[1]
+    tracemalloc.stop()
+
+    return networkx_mst, memory_consumption
 
 # debug = False
 

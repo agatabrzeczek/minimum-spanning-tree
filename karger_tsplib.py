@@ -4,6 +4,7 @@ import tsplib95
 import matplotlib.pyplot as plt
 import networkx as nx
 import tracemalloc
+import math
 
 def BoruvkaStep(edge_list, starting_edges):
     #starting edges are edges at the start of whole program, original edges are edges at the start of boruvka step
@@ -161,6 +162,7 @@ def Run(G):
         if (G.has_edge(i, i)):
             G.remove_edge(i, i)
 
+
     edge_list = [] #converting networkx graph to list of edges
     for edge in G.edges:
         edge_list.append([edge[0], edge[1], G.get_edge_data(edge[0], edge[1])["weight"]])
@@ -173,6 +175,8 @@ def Run(G):
             node_list.append(edge[0])
         if (edge[1] not in node_list and edge[2] != None):
             node_list.append(edge[1])
+
+    tracemalloc.start()
 
     all_done = False #if True the MST has been computed
     tree_edges = [] #we will be adding to this tree w each iteration
@@ -203,6 +207,9 @@ def Run(G):
 
         tree_edges += boruvka_edges
 
+        percentage = math.floor((len(tree_edges)/(len(node_list) - 1))*100)
+        print(f"The MST is {percentage}% done.")
+
         if(len(tree_edges) == (len(node_list))-1):
             all_done = True
         
@@ -213,14 +220,17 @@ def Run(G):
         if (edge[2] != None):
             networkx_mst.add_edge(edge[0], edge[1], weight = edge[2])
 
-    return networkx_mst
+    memory_consumption = tracemalloc.get_traced_memory()[1]
+    tracemalloc.stop()
 
-debug = False
+    return networkx_mst, memory_consumption
 
-problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/burma14.tsp')
+# debug = False
 
-G = problem.get_graph() #our starting graph
+# problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/burma14.tsp')
 
-tracemalloc.start()
+# G = problem.get_graph() #our starting graph
 
-Run(G)
+# tracemalloc.start()
+
+# Run(G)

@@ -35,6 +35,12 @@ def GetWeight(edge):
 def Run(G):
     T = nx.Graph() #our minimum spanning tree
 
+    for i in range(0, len(G.nodes)+1): #removing edges that connect a node to itself
+        if (G.has_edge(i, i)):
+            G.remove_edge(i, i)
+
+    tracemalloc.start()
+
     edges = SortEdges(G)
 
     i = 0
@@ -44,7 +50,10 @@ def Run(G):
             i += 1
         edges.pop(0)
 
-    return T
+    memory_consumption = tracemalloc.get_traced_memory()[1]
+    tracemalloc.stop()
+
+    return T, memory_consumption
 
 def SortEdges(G):
     edge_list = []
