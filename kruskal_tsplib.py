@@ -2,6 +2,8 @@ import tsplib95
 import matplotlib.pyplot as plt
 import networkx as nx
 import tracemalloc
+import time
+import math
 
 def DrawGraph(): #DRAWING
     global current_suplot
@@ -39,6 +41,9 @@ def Run(G):
         if (G.has_edge(i, i)):
             G.remove_edge(i, i)
 
+    percentage = 0
+
+    start_time = time.time()
     tracemalloc.start()
 
     edges = SortEdges(G)
@@ -48,12 +53,19 @@ def Run(G):
         added, T = ExamineEdge(edges[0], T)
         if (added == True):
             i += 1
+
+            old_percentage = percentage
+            percentage = math.floor((len(T.edges)/(len(G.nodes) - 1))*100)
+            if (old_percentage != percentage):
+                print(f"The MST is {percentage}% done.")
+
         edges.pop(0)
 
+    end_time = time.time()
     memory_consumption = tracemalloc.get_traced_memory()[1]
     tracemalloc.stop()
 
-    return T, memory_consumption
+    return T, round(end_time - start_time, 3), memory_consumption
 
 def SortEdges(G):
     edge_list = []

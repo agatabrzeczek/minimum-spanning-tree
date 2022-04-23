@@ -6,7 +6,6 @@ import networkx as nx
 import kruskal_tsplib
 import karger_tsplib
 import boruvka_tsplib
-import tracemalloc
 
 def CheckMSTCorrectness(mst, G):
     actual_mst = nx.minimum_spanning_tree(G, algorithm="boruvka", weight="weight")
@@ -96,6 +95,7 @@ for i in range(0, len(problem_list)):
         chosen_problems.append(problem_list[i][0])
 
 for problem in chosen_problems:
+    print("-----")
     print(f"Loading problem {problem}")
     problem = tsplib95.load(path + '/' + problem)
 
@@ -104,38 +104,41 @@ for problem in chosen_problems:
 
     if ('1' in chosen_algorithms):
         print("-----")
-        print("Running Kruskal algorithm for this problem")
-        kruskal_mst, kruskal_memory = kruskal_tsplib.Run(G)
+        print("Running Kruskal's algorithm for this problem")
+        kruskal_mst, kruskal_time, kruskal_memory = kruskal_tsplib.Run(G)
         print("The result is:")
         print(kruskal_mst.edges)
         if (CheckMSTCorrectness(kruskal_mst, G)):
             print("This result is correct")
         else:
             print("This result is incorrect")
+        print(f"The Kruskal's algorithm needed {kruskal_time} s to solve problem {problem.name}.")
         print(f"The peak memory consumption of Kruskal's algorithm for problem {problem.name} is {kruskal_memory/1000} kB.")
 
     if ('2' in chosen_algorithms):
         print("-----")
-        print("Running Karger algorithm for this problem")
-        karger_mst, karger_memory = karger_tsplib.Run(G)
+        print("Running Karger's algorithm for this problem")
+        karger_mst, karger_time, karger_memory = karger_tsplib.Run(G)
         print("The result is:")
         print(karger_mst.edges)
         if (CheckMSTCorrectness(karger_mst, G)):
             print("This result is correct")
         else:
             print("This result is incorrect")
+        print(f"The Karger's algorithm needed {karger_time} s to solve problem {problem.name}.")
         print(f"The peak memory consumption of Karger's algorithm for problem {problem.name} is {karger_memory/1000} kB.")
 
     if ('3' in chosen_algorithms):
         print("-----")
-        print("Running Boruvka algorithm for this problem")
-        boruvka_mst, boruvka_memory = boruvka_tsplib.Run(G)
+        print("Running Boruvka's algorithm for this problem")
+        boruvka_mst, boruvka_time, boruvka_memory = boruvka_tsplib.Run(G)
         print("The result is:")
         print(boruvka_mst.edges)
         if (CheckMSTCorrectness(boruvka_mst, G)):
             print("This result is correct")
         else:
             print("This result is incorrect")
+        print(f"The Boruvka's algorithm needed {boruvka_time} s to solve problem {problem.name}.")
         print(f"The peak memory consumption of Boruvka's algorithm for problem {problem.name} is {boruvka_memory/1000} kB.")
 
 # print(chosen_algorithms)

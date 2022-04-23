@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import tracemalloc
 import math
+import time
 
 def BoruvkaStep(edge_list, starting_edges):
     #starting edges are edges at the start of whole program, original edges are edges at the start of boruvka step
@@ -129,6 +130,7 @@ def Run(G):
         if (edge[1] not in node_list and edge[2] != None):
             node_list.append(edge[1])
 
+    start_time = time.time()
     tracemalloc.start()
 
     tree_edges = [] #we will be adding to this tree w each iteration
@@ -148,10 +150,11 @@ def Run(G):
         if (edge[2] != None):
             networkx_mst.add_edge(edge[0], edge[1], weight = edge[2])
 
+    end_time = time.time()
     memory_consumption = tracemalloc.get_traced_memory()[1]
     tracemalloc.stop()
 
-    return networkx_mst, memory_consumption
+    return networkx_mst, round(end_time - start_time, 3), memory_consumption
 
 # debug = False
 
