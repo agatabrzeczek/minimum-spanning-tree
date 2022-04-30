@@ -6,6 +6,10 @@ import networkx as nx
 import kruskal_tsplib
 import karger_tsplib
 import boruvka_tsplib
+import csv
+
+def CalculateAverage(list):
+    return round(sum(list)/len(list), 3)
 
 def CheckMSTCorrectness(mst, G):
     actual_mst = nx.minimum_spanning_tree(G, algorithm="boruvka", weight="weight")
@@ -80,6 +84,12 @@ while (more_problems == 'Y' or more_problems == 'y'):
             chosen_problem_nos.append(chosen_problem)
             more_problems = input("Would you like to choose more problems? (Y, N) Default choice is no. ")
 
+no_of_iterations = input("Would you like to run those algorithms 1 time or 10 times? (1, 10) Default choice is 1. ")
+if (no_of_iterations == '10'):
+    no_of_iterations = 10
+else:
+    no_of_iterations = 1
+
 for i in range(0, len(chosen_problem_nos)):
     if (chosen_problem_nos[i] == 'R' or chosen_problem_nos[i] == 'r'):
         choose_random_problem = True
@@ -94,6 +104,14 @@ for i in range(0, len(problem_list)):
     if ((i+1) in chosen_problem_nos):
         chosen_problems.append(problem_list[i][0])
 
+kruskal_times_set = []
+kruskal_memories_set = []
+karger_times_set = []
+karger_memories_set = []
+boruvka_times_set = []
+boruvka_memories_set = []
+
+problem_parameters = []
 for problem in chosen_problems:
     print("-----")
     print(f"Loading problem {problem}")
@@ -102,44 +120,122 @@ for problem in chosen_problems:
     G = problem.get_graph() #our starting graph
     T = nx.Graph() #our minimum spanning tree
 
-    if ('1' in chosen_algorithms):
-        print("-----")
-        print("Running Kruskal's algorithm for this problem")
-        kruskal_mst, kruskal_time, kruskal_memory = kruskal_tsplib.Run(G)
-        print("The result is:")
-        print(kruskal_mst.edges)
-        if (CheckMSTCorrectness(kruskal_mst, G)):
-            print("This result is correct")
-        else:
-            print("This result is incorrect")
-        print(f"The Kruskal's algorithm needed {kruskal_time} s to solve problem {problem.name}.")
-        print(f"The peak memory consumption of Kruskal's algorithm for problem {problem.name} is {kruskal_memory/1000} kB.")
+    print(f"This problem has {len(G.nodes)} nodes and {len(G.edges)} edges.")
+    problem_parameters.append([len(G.nodes), len(G.edges)])
 
-    if ('2' in chosen_algorithms):
-        print("-----")
-        print("Running Karger's algorithm for this problem")
-        karger_mst, karger_time, karger_memory = karger_tsplib.Run(G)
-        print("The result is:")
-        print(karger_mst.edges)
-        if (CheckMSTCorrectness(karger_mst, G)):
-            print("This result is correct")
-        else:
-            print("This result is incorrect")
-        print(f"The Karger's algorithm needed {karger_time} s to solve problem {problem.name}.")
-        print(f"The peak memory consumption of Karger's algorithm for problem {problem.name} is {karger_memory/1000} kB.")
+    algorithm_header = []
+    kruskal_times = []
+    kruskal_memories = []
+    karger_times = []
+    karger_memories = []
+    boruvka_times = []
+    boruvka_memories = []
 
-    if ('3' in chosen_algorithms):
-        print("-----")
-        print("Running Boruvka's algorithm for this problem")
-        boruvka_mst, boruvka_time, boruvka_memory = boruvka_tsplib.Run(G)
-        print("The result is:")
-        print(boruvka_mst.edges)
-        if (CheckMSTCorrectness(boruvka_mst, G)):
-            print("This result is correct")
-        else:
-            print("This result is incorrect")
-        print(f"The Boruvka's algorithm needed {boruvka_time} s to solve problem {problem.name}.")
-        print(f"The peak memory consumption of Boruvka's algorithm for problem {problem.name} is {boruvka_memory/1000} kB.")
+    for i in range(0, no_of_iterations):
+        if ('1' in chosen_algorithms):
+            print("-----")
+            print("Running Kruskal's algorithm for this problem")
+            kruskal_mst, kruskal_time, kruskal_memory = kruskal_tsplib.Run(G)
+            print("The result is:")
+            print(kruskal_mst.edges)
+            if (CheckMSTCorrectness(kruskal_mst, G)):
+                print("This result is correct")
+            else:
+                print("This result is incorrect")
+            print(f"The Kruskal's algorithm needed {kruskal_time} s to solve problem {problem.name}.")
+            print(f"The peak memory consumption of Kruskal's algorithm for problem {problem.name} is {kruskal_memory/1000} kB.")
+            kruskal_times.append(kruskal_time)
+            kruskal_memories.append(kruskal_memory/1000)
+
+        if ('2' in chosen_algorithms):
+            print("-----")
+            print("Running Karger's algorithm for this problem")
+            karger_mst, karger_time, karger_memory = karger_tsplib.Run(G)
+            print("The result is:")
+            print(karger_mst.edges)
+            if (CheckMSTCorrectness(karger_mst, G)):
+                print("This result is correct")
+            else:
+                print("This result is incorrect")
+            print(f"The Karger's algorithm needed {karger_time} s to solve problem {problem.name}.")
+            print(f"The peak memory consumption of Karger's algorithm for problem {problem.name} is {karger_memory/1000} kB.")
+            karger_times.append(karger_time)
+            karger_memories.append(karger_memory/1000)
+
+        if ('3' in chosen_algorithms):
+            print("-----")
+            print("Running Boruvka's algorithm for this problem")
+            boruvka_mst, boruvka_time, boruvka_memory = boruvka_tsplib.Run(G)
+            print("The result is:")
+            print(boruvka_mst.edges)
+            if (CheckMSTCorrectness(boruvka_mst, G)):
+                print("This result is correct")
+            else:
+                print("This result is incorrect")
+            print(f"The Boruvka's algorithm needed {boruvka_time} s to solve problem {problem.name}.")
+            print(f"The peak memory consumption of Boruvka's algorithm for problem {problem.name} is {boruvka_memory/1000} kB.")
+            boruvka_times.append(boruvka_time)
+            boruvka_memories.append(boruvka_memory/1000)
+
+    kruskal_times_set.append(kruskal_times)
+    kruskal_memories_set.append(kruskal_memories)
+    karger_times_set.append(karger_times)
+    karger_memories_set.append(karger_memories)
+    boruvka_times_set.append(boruvka_times)
+    boruvka_memories_set.append(boruvka_memories)
+
+with open('measurements.csv', 'w', encoding='UTF8', newline='') as f:
+
+    writer = csv.writer(f)
+    header = ['time [s]']
+    writer.writerow(header)
+    for i in range(0, len(chosen_problems)):
+        problem_header = [chosen_problems[i]]
+
+        algorithm_header = []
+        if ('1' in chosen_algorithms):
+            algorithm_header.append("Kruskal")
+        if ('2' in chosen_algorithms):
+            algorithm_header.append("Karger")
+        if ('3' in chosen_algorithms):
+            algorithm_header.append("Boruvka")
+
+        data = []
+        if (len(kruskal_times_set) > 0 and len(karger_times_set) > 0 and len(boruvka_times_set) > 0):
+            for j in range(0, no_of_iterations):
+                data.append([kruskal_times_set[i][j], karger_times_set[i][j], boruvka_times_set[i][j]])  
+
+        average = [CalculateAverage(kruskal_times_set[i]), CalculateAverage(karger_times_set[i]), CalculateAverage(boruvka_times_set[i]), '<- average']
+
+        writer.writerow(problem_header)  
+        writer.writerow(['no of nodes:', problem_parameters[i][0], 'no of edges:', problem_parameters[i][1]])
+        writer.writerow(algorithm_header)
+
+        for row in data:
+            writer.writerow(row)
+
+        writer.writerow(average)
+
+    header = ['memory [kB]']
+    writer.writerow(header)
+    for i in range(0, len(chosen_problems)):
+        problem_header = [chosen_problems[i]]
+        data = []
+        if (len(kruskal_memories) > 0 and len(karger_memories) > 0 and len(boruvka_memories) > 0):
+            for j in range(0, no_of_iterations):
+                data.append([kruskal_memories_set[i][j], karger_memories_set[i][j], boruvka_memories_set[i][j]])  
+
+        average = [CalculateAverage(kruskal_memories_set[i]), CalculateAverage(karger_memories_set[i]), CalculateAverage(boruvka_memories_set[i]), '<- average']
+
+        writer.writerow(problem_header)  
+        writer.writerow(['no of nodes:', problem_parameters[i][0], 'no of edges:', problem_parameters[i][1]])
+        writer.writerow(algorithm_header)
+
+        for row in data:
+            writer.writerow(row)
+
+        writer.writerow(average)
+
 
 # print(chosen_algorithms)
 # print(chosen_problems)
