@@ -9,7 +9,10 @@ import boruvka_tsplib
 import csv
 
 def CalculateAverage(list):
-    return round(sum(list)/len(list), 3)
+    if (len(list) == 0):
+        return 'not chosen'
+    else:
+        return round(sum(list)/len(list), 3)
 
 def CheckMSTCorrectness(mst, G):
     actual_mst = nx.minimum_spanning_tree(G, algorithm="boruvka", weight="weight")
@@ -72,14 +75,14 @@ while (more_problems == 'Y' or more_problems == 'y'):
     try:
         chosen_problem = int(chosen_problem)
         #if (chosen_problem not in range (1, (len(problem_list)+1))):
-        if (chosen_problem not in range (1, 93)):
-            print("This is not a valid choice. Please enter a number 1 - 112 or 'R'")
+        if (chosen_problem not in range (1, 110)):
+            print("This is not a valid choice. Please enter a number 1 - 109 or 'R'")
         else:
             chosen_problem_nos.append(chosen_problem)
             more_problems = input("Would you like to choose more problems? (Y, N) Default choice is no. ")
     except ValueError:
         if (chosen_problem != 'R' and chosen_problem != 'r'):
-            print("This is not a valid choice. Please enter a number 1 - 112 or 'R'")
+            print("This is not a valid choice. Please enter a number 1 - 109 or 'R'")
         else: 
             chosen_problem_nos.append(chosen_problem)
             more_problems = input("Would you like to choose more problems? (Y, N) Default choice is no. ")
@@ -135,6 +138,7 @@ for problem in chosen_problems:
         if ('1' in chosen_algorithms):
             print("-----")
             print("Running Kruskal's algorithm for this problem")
+            print(f"iteration no {i+1}")
             kruskal_mst, kruskal_time, kruskal_memory = kruskal_tsplib.Run(G)
             print("The result is:")
             print(kruskal_mst.edges)
@@ -150,6 +154,7 @@ for problem in chosen_problems:
         if ('2' in chosen_algorithms):
             print("-----")
             print("Running Karger's algorithm for this problem")
+            print(f"iteration no {i+1}")
             karger_mst, karger_time, karger_memory = karger_tsplib.Run(G)
             print("The result is:")
             print(karger_mst.edges)
@@ -165,6 +170,7 @@ for problem in chosen_problems:
         if ('3' in chosen_algorithms):
             print("-----")
             print("Running Boruvka's algorithm for this problem")
+            print(f"iteration no {i+1}")
             boruvka_mst, boruvka_time, boruvka_memory = boruvka_tsplib.Run(G)
             print("The result is:")
             print(boruvka_mst.edges)
@@ -201,7 +207,7 @@ with open('measurements.csv', 'w', encoding='UTF8', newline='') as f:
             algorithm_header.append("Boruvka")
 
         data = []
-        if (len(kruskal_times_set) > 0 and len(karger_times_set) > 0 and len(boruvka_times_set) > 0):
+        if (len(kruskal_times_set[0]) > 0 and len(karger_times_set[0]) > 0 and len(boruvka_times_set[0]) > 0):
             for j in range(0, no_of_iterations):
                 data.append([kruskal_times_set[i][j], karger_times_set[i][j], boruvka_times_set[i][j]])  
 
