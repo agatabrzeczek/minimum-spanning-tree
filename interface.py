@@ -9,8 +9,8 @@ import boruvka_tsplib
 import csv
 
 def CalculateAverage(list):
-    if (len(list) == 0):
-        return 'not chosen'
+    if (list[0] == 'not chosen'):
+        return 'not applicable'
     else:
         return round(sum(list)/len(list), 3)
 
@@ -150,6 +150,9 @@ for problem in chosen_problems:
             print(f"The peak memory consumption of Kruskal's algorithm for problem {problem.name} is {kruskal_memory/1000} kB.")
             kruskal_times.append(kruskal_time)
             kruskal_memories.append(kruskal_memory/1000)
+        else:
+            kruskal_times.append("not chosen")
+            kruskal_memories.append("not chosen")
 
         if ('2' in chosen_algorithms):
             print("-----")
@@ -166,6 +169,9 @@ for problem in chosen_problems:
             print(f"The peak memory consumption of Karger's algorithm for problem {problem.name} is {karger_memory/1000} kB.")
             karger_times.append(karger_time)
             karger_memories.append(karger_memory/1000)
+        else:
+            karger_times.append("not chosen")
+            karger_memories.append("not chosen")
 
         if ('3' in chosen_algorithms):
             print("-----")
@@ -182,6 +188,9 @@ for problem in chosen_problems:
             print(f"The peak memory consumption of Boruvka's algorithm for problem {problem.name} is {boruvka_memory/1000} kB.")
             boruvka_times.append(boruvka_time)
             boruvka_memories.append(boruvka_memory/1000)
+        else:
+            boruvka_times.append("not chosen")
+            boruvka_memories.append("not chosen")
 
     kruskal_times_set.append(kruskal_times)
     kruskal_memories_set.append(kruskal_memories)
@@ -198,18 +207,12 @@ with open('measurements.csv', 'w', encoding='UTF8', newline='') as f:
     for i in range(0, len(chosen_problems)):
         problem_header = [chosen_problems[i]]
 
-        algorithm_header = []
-        if ('1' in chosen_algorithms):
-            algorithm_header.append("Kruskal")
-        if ('2' in chosen_algorithms):
-            algorithm_header.append("Karger")
-        if ('3' in chosen_algorithms):
-            algorithm_header.append("Boruvka")
+        algorithm_header = ['Kruskal', 'Karger', 'Boruvka']
 
         data = []
-        if (len(kruskal_times_set[0]) > 0 and len(karger_times_set[0]) > 0 and len(boruvka_times_set[0]) > 0):
-            for j in range(0, no_of_iterations):
-                data.append([kruskal_times_set[i][j], karger_times_set[i][j], boruvka_times_set[i][j]])  
+        #if (len(kruskal_times_set[0]) > 0 and len(karger_times_set[0]) > 0 and len(boruvka_times_set[0]) > 0):
+        for j in range(0, no_of_iterations):
+            data.append([kruskal_times_set[i][j], karger_times_set[i][j], boruvka_times_set[i][j]])  
 
         average = [CalculateAverage(kruskal_times_set[i]), CalculateAverage(karger_times_set[i]), CalculateAverage(boruvka_times_set[i]), '<- average']
 

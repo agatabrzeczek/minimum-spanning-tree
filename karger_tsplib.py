@@ -200,7 +200,7 @@ def Run(G):
             if (len(graph_before_random_selection) == 0): #only done for the first iteration of loop
                 graph_before_random_selection = [x[:] for x in edge_list]
 
-            done = True #first we assume that the tree is completed...
+            done = True #first we assume that the forest is completed...
             for edge in edge_list:
                 if (edge[2] != None):
                     done = False #...and if not, we reset the flag to False
