@@ -4,6 +4,7 @@ import random
 import tsplib95
 import networkx as nx
 import kruskal_tsplib
+import kruskal_tsplib_networkx
 import karger_tsplib
 import boruvka_tsplib
 import csv
@@ -40,9 +41,10 @@ kruskal = False
 karger = False
 
 print("available algorithms:")
-print("1. Kruskal")
-print("2. Karger")
+print("1. Kruskal (the networkx version)")
+print("2. Kruskal (the authorial version)")
 print("3. Boruvka")
+print("4. Karger")
 chosen_algorithms = input("Which algorithms would you like to run? ")
 
 print("available problems:")
@@ -107,6 +109,8 @@ for i in range(0, len(problem_list)):
     if ((i+1) in chosen_problem_nos):
         chosen_problems.append(problem_list[i][0])
 
+kruskal_networkx_times_set = []
+kruskal_networkx_memories_set = []
 kruskal_times_set = []
 kruskal_memories_set = []
 karger_times_set = []
@@ -127,6 +131,8 @@ for problem in chosen_problems:
     problem_parameters.append([len(G.nodes), len(G.edges)])
 
     algorithm_header = []
+    kruskal_networkx_times = []
+    kruskal_networkx_memories = []
     kruskal_times = []
     kruskal_memories = []
     karger_times = []
@@ -137,7 +143,26 @@ for problem in chosen_problems:
     for i in range(0, no_of_iterations):
         if ('1' in chosen_algorithms):
             print("-----")
-            print("Running Kruskal's algorithm for this problem")
+            print("Running Kruskal's algorithm (the networkx version) for this problem")
+            print(f"iteration no {i+1}")
+            kruskal_networkx_mst, kruskal_networkx_time, kruskal_networkx_memory = kruskal_tsplib_networkx.Run(G)
+            print("The result is:")
+            print(kruskal_networkx_mst.edges)
+            if (CheckMSTCorrectness(kruskal_networkx_mst, G)):
+                print("This result is correct")
+            else:
+                print("This result is incorrect")
+            print(f"The Kruskal's algorithm (the networkx version) needed {kruskal_networkx_time} s to solve problem {problem.name}.")
+            print(f"The peak memory consumption of Kruskal's algorithm (the networkx version) for problem {problem.name} is {kruskal_networkx_memory/1000} kB.")
+            kruskal_networkx_times.append(kruskal_networkx_time)
+            kruskal_networkx_memories.append(kruskal_networkx_memory/1000)
+        else:
+            kruskal_networkx_times.append("not chosen")
+            kruskal_networkx_memories.append("not chosen")
+
+        if ('2' in chosen_algorithms):
+            print("-----")
+            print("Running Kruskal's algorithm (the authorial version) for this problem")
             print(f"iteration no {i+1}")
             kruskal_mst, kruskal_time, kruskal_memory = kruskal_tsplib.Run(G)
             print("The result is:")
@@ -146,32 +171,13 @@ for problem in chosen_problems:
                 print("This result is correct")
             else:
                 print("This result is incorrect")
-            print(f"The Kruskal's algorithm needed {kruskal_time} s to solve problem {problem.name}.")
-            print(f"The peak memory consumption of Kruskal's algorithm for problem {problem.name} is {kruskal_memory/1000} kB.")
+            print(f"The Kruskal's algorithm (the authorial version) needed {kruskal_time} s to solve problem {problem.name}.")
+            print(f"The peak memory consumption of Kruskal's algorithm (the authorial version) for problem {problem.name} is {kruskal_memory/1000} kB.")
             kruskal_times.append(kruskal_time)
             kruskal_memories.append(kruskal_memory/1000)
         else:
             kruskal_times.append("not chosen")
             kruskal_memories.append("not chosen")
-
-        if ('2' in chosen_algorithms):
-            print("-----")
-            print("Running Karger's algorithm for this problem")
-            print(f"iteration no {i+1}")
-            karger_mst, karger_time, karger_memory = karger_tsplib.Run(G)
-            print("The result is:")
-            print(karger_mst.edges)
-            if (CheckMSTCorrectness(karger_mst, G)):
-                print("This result is correct")
-            else:
-                print("This result is incorrect")
-            print(f"The Karger's algorithm needed {karger_time} s to solve problem {problem.name}.")
-            print(f"The peak memory consumption of Karger's algorithm for problem {problem.name} is {karger_memory/1000} kB.")
-            karger_times.append(karger_time)
-            karger_memories.append(karger_memory/1000)
-        else:
-            karger_times.append("not chosen")
-            karger_memories.append("not chosen")
 
         if ('3' in chosen_algorithms):
             print("-----")
@@ -192,6 +198,27 @@ for problem in chosen_problems:
             boruvka_times.append("not chosen")
             boruvka_memories.append("not chosen")
 
+        if ('4' in chosen_algorithms):
+            print("-----")
+            print("Running Karger's algorithm for this problem")
+            print(f"iteration no {i+1}")
+            karger_mst, karger_time, karger_memory = karger_tsplib.Run(G)
+            print("The result is:")
+            print(karger_mst.edges)
+            if (CheckMSTCorrectness(karger_mst, G)):
+                print("This result is correct")
+            else:
+                print("This result is incorrect")
+            print(f"The Karger's algorithm needed {karger_time} s to solve problem {problem.name}.")
+            print(f"The peak memory consumption of Karger's algorithm for problem {problem.name} is {karger_memory/1000} kB.")
+            karger_times.append(karger_time)
+            karger_memories.append(karger_memory/1000)
+        else:
+            karger_times.append("not chosen")
+            karger_memories.append("not chosen")
+
+    kruskal_networkx_times_set.append(kruskal_networkx_times)
+    kruskal_networkx_memories_set.append(kruskal_networkx_memories)
     kruskal_times_set.append(kruskal_times)
     kruskal_memories_set.append(kruskal_memories)
     karger_times_set.append(karger_times)
@@ -207,14 +234,14 @@ with open('measurements.csv', 'w', encoding='UTF8', newline='') as f:
     for i in range(0, len(chosen_problems)):
         problem_header = [chosen_problems[i]]
 
-        algorithm_header = ['Kruskal', 'Karger', 'Boruvka']
+        algorithm_header = ['Kruskal (networkx)', 'Kruskal (authorial)', 'Karger', 'Boruvka']
 
         data = []
         #if (len(kruskal_times_set[0]) > 0 and len(karger_times_set[0]) > 0 and len(boruvka_times_set[0]) > 0):
         for j in range(0, no_of_iterations):
-            data.append([kruskal_times_set[i][j], karger_times_set[i][j], boruvka_times_set[i][j]])  
+            data.append([kruskal_networkx_times_set[i][j], kruskal_times_set[i][j], karger_times_set[i][j], boruvka_times_set[i][j]])  
 
-        average = [CalculateAverage(kruskal_times_set[i]), CalculateAverage(karger_times_set[i]), CalculateAverage(boruvka_times_set[i]), '<- average']
+        average = [CalculateAverage(kruskal_networkx_times_set[i]), CalculateAverage(kruskal_times_set[i]), CalculateAverage(karger_times_set[i]), CalculateAverage(boruvka_times_set[i]), '<- average']
 
         writer.writerow(problem_header)  
         writer.writerow(['no of nodes:', problem_parameters[i][0], 'no of edges:', problem_parameters[i][1]])
@@ -230,11 +257,11 @@ with open('measurements.csv', 'w', encoding='UTF8', newline='') as f:
     for i in range(0, len(chosen_problems)):
         problem_header = [chosen_problems[i]]
         data = []
-        if (len(kruskal_memories) > 0 and len(karger_memories) > 0 and len(boruvka_memories) > 0):
+        if (len(kruskal_networkx_memories) > 0 and len(kruskal_memories) and len(karger_memories) > 0 and len(boruvka_memories) > 0):
             for j in range(0, no_of_iterations):
-                data.append([kruskal_memories_set[i][j], karger_memories_set[i][j], boruvka_memories_set[i][j]])  
+                data.append([kruskal_networkx_memories_set[i][j], kruskal_memories_set[i][j], karger_memories_set[i][j], boruvka_memories_set[i][j]])  
 
-        average = [CalculateAverage(kruskal_memories_set[i]), CalculateAverage(karger_memories_set[i]), CalculateAverage(boruvka_memories_set[i]), '<- average']
+        average = [CalculateAverage(kruskal_networkx_memories_set[i]), CalculateAverage(kruskal_memories_set[i]), CalculateAverage(karger_memories_set[i]), CalculateAverage(boruvka_memories_set[i]), '<- average']
 
         writer.writerow(problem_header)  
         writer.writerow(['no of nodes:', problem_parameters[i][0], 'no of edges:', problem_parameters[i][1]])
