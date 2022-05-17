@@ -5,8 +5,9 @@ import tsplib95
 import networkx as nx
 import kruskal_tsplib
 import kruskal_tsplib_networkx
-import karger_tsplib
+import karger_tsplib#_backup as karger_tsplib
 import boruvka_tsplib
+import biswas_tsplib
 import csv
 
 def CalculateAverage(list):
@@ -45,6 +46,7 @@ print("1. Kruskal (the networkx version)")
 print("2. Kruskal (the authorial version)")
 print("3. Boruvka")
 print("4. Karger")
+print("5. Biswas")
 chosen_algorithms = input("Which algorithms would you like to run? ")
 
 print("available problems:")
@@ -117,6 +119,8 @@ karger_times_set = []
 karger_memories_set = []
 boruvka_times_set = []
 boruvka_memories_set = []
+biswas_times_set = []
+biswas_memories_set = []
 
 problem_parameters = []
 for problem in chosen_problems:
@@ -139,6 +143,8 @@ for problem in chosen_problems:
     karger_memories = []
     boruvka_times = []
     boruvka_memories = []
+    biswas_times = []
+    biswas_memories = []
 
     for i in range(0, no_of_iterations):
         if ('1' in chosen_algorithms):
@@ -217,6 +223,25 @@ for problem in chosen_problems:
             karger_times.append("not chosen")
             karger_memories.append("not chosen")
 
+        if ('5' in chosen_algorithms):
+            print("-----")
+            print("Running Biswas' algorithm for this problem")
+            print(f"iteration no {i+1}")
+            biswas_mst, biswas_time, biswas_memory = biswas_tsplib.Run(G)
+            print("The result is:")
+            print(biswas_mst.edges)
+            if (CheckMSTCorrectness(biswas_mst, G)):
+                print("This result is correct")
+            else:
+                print("This result is incorrect")
+            print(f"The Biswas' algorithm needed {biswas_time} s to solve problem {problem.name}.")
+            print(f"The peak memory consumption of Biswas' algorithm for problem {problem.name} is {biswas_memory/1000} kB.")
+            biswas_times.append(biswas_time)
+            biswas_memories.append(biswas_memory/1000)
+        else:
+            biswas_times.append("not chosen")
+            biswas_memories.append("not chosen")
+
     kruskal_networkx_times_set.append(kruskal_networkx_times)
     kruskal_networkx_memories_set.append(kruskal_networkx_memories)
     kruskal_times_set.append(kruskal_times)
@@ -225,6 +250,8 @@ for problem in chosen_problems:
     karger_memories_set.append(karger_memories)
     boruvka_times_set.append(boruvka_times)
     boruvka_memories_set.append(boruvka_memories)
+    biswas_times_set.append(biswas_times)
+    biswas_memories_set.append(biswas_memories)
 
 with open('measurements.csv', 'w', encoding='UTF8', newline='') as f:
 
@@ -234,14 +261,14 @@ with open('measurements.csv', 'w', encoding='UTF8', newline='') as f:
     for i in range(0, len(chosen_problems)):
         problem_header = [chosen_problems[i]]
 
-        algorithm_header = ['Kruskal (networkx)', 'Kruskal (authorial)', 'Karger', 'Boruvka']
+        algorithm_header = ['Kruskal (networkx)', 'Kruskal (authorial)', 'Karger', 'Boruvka', 'Biswas']
 
         data = []
         #if (len(kruskal_times_set[0]) > 0 and len(karger_times_set[0]) > 0 and len(boruvka_times_set[0]) > 0):
         for j in range(0, no_of_iterations):
-            data.append([kruskal_networkx_times_set[i][j], kruskal_times_set[i][j], karger_times_set[i][j], boruvka_times_set[i][j]])  
+            data.append([kruskal_networkx_times_set[i][j], kruskal_times_set[i][j], karger_times_set[i][j], boruvka_times_set[i][j], biswas_times_set[i][j]])  
 
-        average = [CalculateAverage(kruskal_networkx_times_set[i]), CalculateAverage(kruskal_times_set[i]), CalculateAverage(karger_times_set[i]), CalculateAverage(boruvka_times_set[i]), '<- average']
+        average = [CalculateAverage(kruskal_networkx_times_set[i]), CalculateAverage(kruskal_times_set[i]), CalculateAverage(karger_times_set[i]), CalculateAverage(boruvka_times_set[i]), CalculateAverage(biswas_times_set[i]), '<- average']
 
         writer.writerow(problem_header)  
         writer.writerow(['no of nodes:', problem_parameters[i][0], 'no of edges:', problem_parameters[i][1]])
@@ -257,11 +284,11 @@ with open('measurements.csv', 'w', encoding='UTF8', newline='') as f:
     for i in range(0, len(chosen_problems)):
         problem_header = [chosen_problems[i]]
         data = []
-        if (len(kruskal_networkx_memories) > 0 and len(kruskal_memories) and len(karger_memories) > 0 and len(boruvka_memories) > 0):
-            for j in range(0, no_of_iterations):
-                data.append([kruskal_networkx_memories_set[i][j], kruskal_memories_set[i][j], karger_memories_set[i][j], boruvka_memories_set[i][j]])  
+        #if (len(kruskal_networkx_memories) > 0 and len(kruskal_memories) and len(karger_memories) > 0 and len(boruvka_memories) > 0):
+        for j in range(0, no_of_iterations):
+            data.append([kruskal_networkx_memories_set[i][j], kruskal_memories_set[i][j], karger_memories_set[i][j], boruvka_memories_set[i][j], biswas_memories_set[i][j]])  
 
-        average = [CalculateAverage(kruskal_networkx_memories_set[i]), CalculateAverage(kruskal_memories_set[i]), CalculateAverage(karger_memories_set[i]), CalculateAverage(boruvka_memories_set[i]), '<- average']
+        average = [CalculateAverage(kruskal_networkx_memories_set[i]), CalculateAverage(kruskal_memories_set[i]), CalculateAverage(karger_memories_set[i]), CalculateAverage(boruvka_memories_set[i]), CalculateAverage(biswas_memories_set[i]), '<- average']
 
         writer.writerow(problem_header)  
         writer.writerow(['no of nodes:', problem_parameters[i][0], 'no of edges:', problem_parameters[i][1]])
