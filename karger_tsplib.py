@@ -27,33 +27,45 @@ def BoruvkaStep(edge_list, starting_edges):
             edges_to_be_contracted.append(edge_to_be_contracted)
 
     for edge_to_be_contracted in edges_to_be_contracted:
+        edge_to_be_contracted = [edge_to_be_contracted[0], edge_to_be_contracted[1], networkx_graph.get_edge_data(edge_to_be_contracted[0], edge_to_be_contracted[1])["weight"]] #integration stub
         networkx_graph.remove_edge(edge_to_be_contracted[0], edge_to_be_contracted[1])
 
-    original_edges = [x[:] for x in edge_list]
-    node_list = list(networkx_graph.nodes)
+    original_edges = [x[:] for x in edge_list] #integration stub
 
-    tree_index_list = []
+    for i in range(0, len(edge_list)): #integration stub
+        edge = edge_list[i]
+        if not(networkx_graph.has_edge(edge[0], edge[1])):
+            edge_list[i][2] = None
+
+    node_list = list(networkx_graph.nodes) #integration stub
+
     for edge_to_be_contracted in edges_to_be_contracted:
 
-        for i in range(0, len(original_edges)): #mapping edge
+        #TODO change this to new version
+        for i in range(0, len(original_edges)): #mapping nodes of edges to be contracted
             edge_nodes = [original_edges[i][0], original_edges[i][1]]
             edge_weight = original_edges[i][2]
             if (edge_to_be_contracted[0] in edge_nodes and edge_weight != None):
                 if (edge_to_be_contracted[1] in edge_nodes):
                     edge_to_be_contracted = edge_list[i].copy()
-                    tree_index_list.append(i)
+
+        for edge in edge_list: #integration stub
+            edge_nodes = [edge[0], edge[1]]
+            if (edge_to_be_contracted[0] in edge_nodes and edge_to_be_contracted[1] in edge_nodes):
+                edge[2] = None 
+
+        #networkx_graph = GetNetworkxGraph(edge_list) #integration stub
 
         edges_to_be_updated = []
-        for edge in edge_list: #gathering all the edges which have to be updated
-            if (edge[2] != None):
-                edge_nodes = [edge[0], edge[1]]
-                if (edge_to_be_contracted[0] in edge_nodes):
-                    if (edge_to_be_contracted[1] in edge_nodes):
-                        edge[2] = None 
-                    else:
-                        edges_to_be_updated.append(edge)
-                elif (edge_to_be_contracted[1] in edge_nodes):
-                    edges_to_be_updated.append(edge)
+        for edge in networkx_graph.edges: #gathering all the edges which have to be updated
+            edge_nodes = [edge[0], edge[1]]
+            if (edge_to_be_contracted[0] in edge_nodes or edge_to_be_contracted[1] in edge_nodes):
+                edges_to_be_updated.append(edge)
+
+        #integration stub
+        for i in range(0, len(edges_to_be_updated)):
+            edge = edges_to_be_updated[i]
+            edges_to_be_updated[i] = [edge[0], edge[1], networkx_graph.get_edge_data(edge[0], edge[1])["weight"]]
 
         for node in node_list:
             compared_edges = []
@@ -65,12 +77,14 @@ def BoruvkaStep(edge_list, starting_edges):
                     if (node in edge_nodes):
                         compared_edges.append(edge)
             if (len(compared_edges) == 0): #DID
-                for i in range(0, len(edge_list)):
-                    edge_nodes = [edge_list[i][0], edge_list[i][1]]
+                for edge in networkx_graph.edges:
+                    edge_nodes = [edge[0], edge[1]]
                     if (node in edge_nodes):
                         if (max([edge_to_be_contracted[0], edge_to_be_contracted[1]]) in edge_nodes):
-                            edge_list[i][0] = min([edge_to_be_contracted[0], edge_to_be_contracted[1]])
-                            edge_list[i][1] = node
+                            edge_weight = networkx_graph.get_edge_data(edge[0], edge[1])["weight"]
+                            edge_id = networkx_graph.get_edge_data(edge[0], edge[1])["id"]
+                            networkx_graph.remove_edge(edge_nodes)
+                            networkx_graph.add_edge(edge[0], edge[1], weight = edge_weight, id = edge_id)
             else:
                 if (len(compared_edges) == 2 and compared_edges[0][2] == compared_edges[1][2]): #if both edges have the same weight, just throw away the one with the greater node
                     for i in range(0, len(edge_list)):
@@ -80,6 +94,7 @@ def BoruvkaStep(edge_list, starting_edges):
                                 edge_list[i][0] = min([edge_to_be_contracted[0], edge_to_be_contracted[1]])
                                 edge_list[i][1] = node
                                 edge_list[i][2] = None
+                                #networkx_graph = GetNetworkxGraph(edge_list)
                 else:
                     if (len(compared_edges) == 1):
                         new_weight = compared_edges[0][2]
@@ -95,9 +110,13 @@ def BoruvkaStep(edge_list, starting_edges):
                                 edge_list[i][1] = node
                                 if (edge_list[i][2] != new_weight):
                                     edge_list[i][2] = None
+                                    #networkx_graph = GetNetworkxGraph(edge_list)
                             elif (min([edge_to_be_contracted[0], edge_to_be_contracted[1]]) in edge_nodes):
                                 if (edge_list[i][2] != new_weight):
                                     edge_list[i][2] = None
+                                    #networkx_graph = GetNetworkxGraph(edge_list)
+
+        #networkx_graph = GetNetworkxGraph(edge_list)
 
     tree_edges = []
     for edge in edges_to_be_contracted:
@@ -144,9 +163,11 @@ def GetNetworkxGraph(edge_list):
 
     networkx_graph = nx.Graph()
 
-    for edge in edge_list:
+    #for edge in edge_list:
+    for i in range(0, len(edge_list)):
+        edge = edge_list[i]
         if (edge[2] != None):
-            networkx_graph.add_edge(edge[0], edge[1], weight = edge[2])
+            networkx_graph.add_edge(edge[0], edge[1], weight = edge[2], id = i)
     
     return networkx_graph
 
@@ -156,6 +177,7 @@ def SelectRandomEdges(edge_list):
     for edge in edge_list:
         decision = random.randrange(0, 2)
         if (decision == 1):
+        #if (edge in [[12, 4, 8], [3, 4, 32], [1, 4, 10]]):
             selected_edges.append(edge)
         else:
             selected_edges.append([edge[0], edge[1], None])
