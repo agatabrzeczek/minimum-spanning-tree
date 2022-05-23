@@ -5,7 +5,8 @@ import tsplib95
 import networkx as nx
 import kruskal_tsplib
 import kruskal_tsplib_networkx
-import karger_tsplib#_backup as karger_tsplib
+import karger_tsplib#_kopia as karger_tsplib
+#import karger_tsplib_dictionary as karger_tsplib
 import boruvka_tsplib
 import biswas_tsplib
 import csv
@@ -151,13 +152,16 @@ for problem in chosen_problems:
             print("-----")
             print("Running Kruskal's algorithm (the networkx version) for this problem")
             print(f"iteration no {i+1}")
+            original_G = G.copy()
             kruskal_networkx_mst, kruskal_networkx_time, kruskal_networkx_memory = kruskal_tsplib_networkx.Run(G)
+            G = original_G
             print("The result is:")
             print(kruskal_networkx_mst.edges)
             if (CheckMSTCorrectness(kruskal_networkx_mst, G)):
                 print("This result is correct")
             else:
                 print("This result is incorrect")
+                exit()
             print(f"The Kruskal's algorithm (the networkx version) needed {kruskal_networkx_time} s to solve problem {problem.name}.")
             print(f"The peak memory consumption of Kruskal's algorithm (the networkx version) for problem {problem.name} is {kruskal_networkx_memory/1000} kB.")
             kruskal_networkx_times.append(kruskal_networkx_time)
@@ -170,13 +174,16 @@ for problem in chosen_problems:
             print("-----")
             print("Running Kruskal's algorithm (the authorial version) for this problem")
             print(f"iteration no {i+1}")
+            original_G = G.copy()
             kruskal_mst, kruskal_time, kruskal_memory = kruskal_tsplib.Run(G)
+            G = original_G
             print("The result is:")
             print(kruskal_mst.edges)
             if (CheckMSTCorrectness(kruskal_mst, G)):
                 print("This result is correct")
             else:
                 print("This result is incorrect")
+                exit()
             print(f"The Kruskal's algorithm (the authorial version) needed {kruskal_time} s to solve problem {problem.name}.")
             print(f"The peak memory consumption of Kruskal's algorithm (the authorial version) for problem {problem.name} is {kruskal_memory/1000} kB.")
             kruskal_times.append(kruskal_time)
@@ -189,13 +196,16 @@ for problem in chosen_problems:
             print("-----")
             print("Running Boruvka's algorithm for this problem")
             print(f"iteration no {i+1}")
+            original_G = G.copy()
             boruvka_mst, boruvka_time, boruvka_memory = boruvka_tsplib.Run(G)
+            G = original_G
             print("The result is:")
             print(boruvka_mst.edges)
             if (CheckMSTCorrectness(boruvka_mst, G)):
                 print("This result is correct")
             else:
                 print("This result is incorrect")
+                exit()
             print(f"The Boruvka's algorithm needed {boruvka_time} s to solve problem {problem.name}.")
             print(f"The peak memory consumption of Boruvka's algorithm for problem {problem.name} is {boruvka_memory/1000} kB.")
             boruvka_times.append(boruvka_time)
@@ -208,13 +218,16 @@ for problem in chosen_problems:
             print("-----")
             print("Running Karger's algorithm for this problem")
             print(f"iteration no {i+1}")
+            original_G = G.copy()
             karger_mst, karger_time, karger_memory = karger_tsplib.Run(G)
+            G = original_G
             print("The result is:")
             print(karger_mst.edges)
             if (CheckMSTCorrectness(karger_mst, G)):
                 print("This result is correct")
             else:
                 print("This result is incorrect")
+                exit()
             print(f"The Karger's algorithm needed {karger_time} s to solve problem {problem.name}.")
             print(f"The peak memory consumption of Karger's algorithm for problem {problem.name} is {karger_memory/1000} kB.")
             karger_times.append(karger_time)
@@ -227,13 +240,16 @@ for problem in chosen_problems:
             print("-----")
             print("Running Biswas' algorithm for this problem")
             print(f"iteration no {i+1}")
+            original_G = G.copy()
             biswas_mst, biswas_time, biswas_memory = biswas_tsplib.Run(G)
+            G = original_G
             print("The result is:")
             print(biswas_mst.edges)
             if (CheckMSTCorrectness(biswas_mst, G)):
                 print("This result is correct")
             else:
                 print("This result is incorrect")
+                exit()
             print(f"The Biswas' algorithm needed {biswas_time} s to solve problem {problem.name}.")
             print(f"The peak memory consumption of Biswas' algorithm for problem {problem.name} is {biswas_memory/1000} kB.")
             biswas_times.append(biswas_time)
