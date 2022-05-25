@@ -26,6 +26,12 @@ def Run(g):
     start_time = time.time()
     tracemalloc.start()
 
+    percentage = 0
+    no_of_edges_in_g = len(g.edges)
+    no_of_edges_in_t = len(g.nodes) - 1
+    no_of_edges_to_be_removed = no_of_edges_in_g - no_of_edges_in_t
+    no_of_removed_edges = 0
+
     nodes_to_be_checked = list(g.nodes)
     while (len(g.edges) > (len(g.nodes) - 1)):
 
@@ -72,6 +78,13 @@ def Run(g):
                 maximum_weight_edge = maximum_degree_sum_edge
 
             g.remove_edge(maximum_weight_edge[0], maximum_weight_edge[1])
+            no_of_removed_edges += 1
+
+            old_percentage = percentage
+            percentage = math.floor((no_of_removed_edges/no_of_edges_to_be_removed)*100)
+            if (old_percentage != percentage):
+                print(f"The MST is {percentage}% done.")
+
             #print(f"removed edge {maximum_weight_edge}")
 
             the_cycle = GetCycleForNode(g, maximum_degree_node, [], None, [])
@@ -82,15 +95,4 @@ def Run(g):
     tracemalloc.stop()
 
     return g, round(end_time - start_time, 3), memory_consumption
-
-g = nx.Graph()
-g.add_edge('A', 'B', weight = 1)
-g.add_edge('A', 'D', weight = 2)
-g.add_edge('A', 'E', weight = 3)
-g.add_edge('B', 'C', weight = 5)
-g.add_edge('B', 'E', weight = 5)#3
-g.add_edge('B', 'F', weight = 1)
-g.add_edge('C', 'D', weight = 4)#5
-g.add_edge('C', 'F', weight = 2)
-g.add_edge('D', 'E', weight = 4)
 
