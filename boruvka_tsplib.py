@@ -1,11 +1,9 @@
 from cmath import inf
-import random
-import tsplib95
-import matplotlib.pyplot as plt
 import networkx as nx
 import tracemalloc
 import math
 import time
+import tsplib95
 
 def BoruvkaStep(networkx_graph):
 
@@ -25,8 +23,7 @@ def BoruvkaStep(networkx_graph):
 
     tree_edges = []
     for edge in edges_to_be_contracted:
-        edge_id = networkx_graph.get_edge_data(edge[0], edge[1])["id"]
-        tree_edges.append(edge_id)
+        tree_edges.append(networkx_graph.get_edge_data(edge[0], edge[1])["id"])
 
     for edge_to_be_contracted in edges_to_be_contracted:
 
@@ -101,25 +98,41 @@ def Run(G):
             done = True
 
     networkx_mst = nx.Graph()
-    for edge_id in tree_edges:
-        for original_edge in original_G.edges:
-            original_edge_id = original_G.get_edge_data(original_edge[0], original_edge[1])["id"]
-            if (edge_id == original_edge_id):
-                tree_edge_weight = original_G.get_edge_data(original_edge[0], original_edge[1])["weight"]
-                networkx_mst.add_edge(original_edge[0], original_edge[1], weight = tree_edge_weight, id = edge_id)
+    # for edge_id in tree_edges:
+    #     for original_edge in original_G.edges:
+    #         original_edge_id = original_G.get_edge_data(original_edge[0], original_edge[1])["id"]
+    #         if (edge_id == original_edge_id):
+    #             tree_edge_weight = original_G.get_edge_data(original_edge[0], original_edge[1])["weight"]
+    #             networkx_mst.add_edge(original_edge[0], original_edge[1], weight = tree_edge_weight, id = edge_id)
+
+    for original_edge in original_G.edges:
+        original_edge_id = original_G.get_edge_data(original_edge[0], original_edge[1])["id"]
+        if (original_edge_id in tree_edges):
+            for edge_id in tree_edges:
+                if (edge_id == original_edge_id):
+                    tree_edge_weight = original_G.get_edge_data(original_edge[0], original_edge[1])["weight"]
+                    networkx_mst.add_edge(original_edge[0], original_edge[1], weight = tree_edge_weight, id = edge_id)
+                    break
 
     end_time = time.time()
     memory_consumption = tracemalloc.get_traced_memory()[1]
     tracemalloc.stop()
 
     return networkx_mst, round(end_time - start_time, 3), memory_consumption
+if __name__ == "__main__":
+    problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/lin318.tsp')
 
-# debug = False
+    G = problem.get_graph()
 
-# problem = tsplib95.load('../../data/tsplib95/archives/problems/tsp/burma14.tsp')
+    for i in range(1, len(G.nodes)+1):
+        G.remove_edge(i, i)
 
-# G = problem.get_graph() #our starting graph
+    edge_list = list(G.edges)
+    for i in range(0, len(edge_list)):
+        edge = edge_list[i]
+        if (i % 2 == 0):
+            G.remove_edge(edge[0], edge[1])
 
-# tracemalloc.start()
+    mst, ktime, b = Run(G)
 
-# Run(G)
+    print(ktime)

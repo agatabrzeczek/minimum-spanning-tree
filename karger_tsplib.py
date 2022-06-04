@@ -1,7 +1,6 @@
 from cmath import inf
 import random
 import tsplib95
-import matplotlib.pyplot as plt
 import networkx as nx
 import tracemalloc
 import math
@@ -25,8 +24,7 @@ def BoruvkaStep(networkx_graph):
 
     tree_edges = []
     for edge in edges_to_be_contracted:
-        edge_id = networkx_graph.get_edge_data(edge[0], edge[1])["id"]
-        tree_edges.append(edge_id)
+        tree_edges.append(networkx_graph.get_edge_data(edge[0], edge[1])["id"])
 
     for edge_to_be_contracted in edges_to_be_contracted:
 
@@ -75,15 +73,12 @@ def DeleteFHeavyEdges(networkx_graph, forest):
 
     for edge_id in forest:
         for edge in networkx_graph.edges:
-            G_edge_id = networkx_graph.get_edge_data(edge[0], edge[1])["id"]
-            if (edge_id == G_edge_id):
-                edge_weight = networkx_graph.get_edge_data(edge[0], edge[1])["weight"]
-                networkx_forest.add_edge(edge[0], edge[1], weight = edge_weight, id = edge_id)
+            if (edge_id == networkx_graph.get_edge_data(edge[0], edge[1])["id"]):
+                networkx_forest.add_edge(edge[0], edge[1], weight = networkx_graph.get_edge_data(edge[0], edge[1])["weight"], id = edge_id)
 
     for edge in networkx_graph.edges:
 
         maximum_weight = 0
-        weight_graph = networkx_graph.get_edge_data(edge[0], edge[1])["weight"]
         if (networkx_forest.has_node(edge[0]) and networkx_forest.has_node(edge[1])):
             if (nx.has_path(networkx_forest, edge[0], edge[1])):
                 path = nx.shortest_path(networkx_forest, source=edge[0], target=edge[1])
@@ -95,7 +90,7 @@ def DeleteFHeavyEdges(networkx_graph, forest):
                 maximum_weight = inf
         else:
             maximum_weight = inf
-        if (weight_graph > maximum_weight):
+        if (networkx_graph.get_edge_data(edge[0], edge[1])["weight"] > maximum_weight):
             networkx_graph.remove_edge(edge[0], edge[1])
 
     return networkx_graph
@@ -112,11 +107,9 @@ def GetNetworkxGraph(edge_list):
     return networkx_graph
 
 def SelectRandomEdges(graph):
-    #subgraph = graph.copy()
 
     for edge in graph.edges:
-        decision = random.randrange(0, 2)
-        if (decision == 1):
+        if (random.randrange(0, 2) == 1):
             graph.remove_edge(edge[0], edge[1])
 
     return graph
@@ -140,30 +133,37 @@ def Run(G):
 
     original_G = G.copy()
 
-    all_done = False #if True the MST has been computed
+    #all_done = False #if True the MST has been computed
     tree_edges = [] #we will be adding to this tree w each iteration
-    while (all_done == False):
-        done = False #if true the MSF of subgraph has been computed
+    while (True):
+        #done = False #if true the MSF of subgraph has been computed
         forest_edges = []
         boruvka_edges = []
         graph_before_random_selection = []
-        while (done == False):
+        while (True):
             G, new_tree_edges = BoruvkaStep(G) #first Boruvka step
             forest_edges += new_tree_edges
+
+            if (len(G.edges) == 0): #no need to proceed if the graph is empty - optimization
+                if (len(boruvka_edges) == 0):
+                    boruvka_edges = forest_edges.copy()
+                    graph_before_random_selection = G.copy()
+                break
 
             G, new_tree_edges = BoruvkaStep(G) #second Boruvka step
             forest_edges += new_tree_edges
 
             if (len(boruvka_edges) == 0): #only done for the first iteration of loop
                 boruvka_edges = forest_edges.copy()
-
-            if (len(graph_before_random_selection) == 0): #only done for the first iteration of loop
                 graph_before_random_selection = G.copy()
+                
+            if (len(G.edges) == 0): #no need to proceed if the graph is empty - optimization
+                break
 
             G = SelectRandomEdges(G)
 
             if (len(G.edges) == 0):
-                done = True
+                break
 
         tree_edges += boruvka_edges
 
@@ -171,17 +171,34 @@ def Run(G):
         print(f"The MST is {percentage}% done.")
 
         if(len(tree_edges) == (len(original_G.nodes))-1):
-            all_done = True
+            break
 
         G = DeleteFHeavyEdges(graph_before_random_selection, forest_edges)
 
     networkx_mst = nx.Graph()
-    for edge_id in tree_edges:
-        for original_edge in original_G.edges:
-            original_edge_id = original_G.get_edge_data(original_edge[0], original_edge[1])["id"]
-            if (edge_id == original_edge_id):
-                tree_edge_weight = original_G.get_edge_data(original_edge[0], original_edge[1])["weight"]
-                networkx_mst.add_edge(original_edge[0], original_edge[1], weight = tree_edge_weight, id = edge_id)
+    # for edge_id in tree_edges:
+    #     for original_edge in original_G.edges:
+    #         original_edge_id = original_G.get_edge_data(original_edge[0], original_edge[1])["id"]
+    #         if (edge_id == original_edge_id):
+    #             tree_edge_weight = original_G.get_edge_data(original_edge[0], original_edge[1])["weight"]
+    #             networkx_mst.add_edge(original_edge[0], original_edge[1], weight = tree_edge_weight, id = edge_id)
+
+    for original_edge in original_G.edges:
+        original_edge_id = original_G.get_edge_data(original_edge[0], original_edge[1])["id"]
+        if (original_edge_id in tree_edges):
+            for edge_id in tree_edges:
+                if (edge_id == original_edge_id):
+                    tree_edge_weight = original_G.get_edge_data(original_edge[0], original_edge[1])["weight"]
+                    networkx_mst.add_edge(original_edge[0], original_edge[1], weight = tree_edge_weight, id = edge_id)
+                    break
+
+    # for edge_id in tree_edges:
+    #     for original_edge in original_G.edges:
+    #         original_edge_id = original_G.get_edge_data(original_edge[0], original_edge[1])["id"]
+    #         if (edge_id == original_edge_id):
+    #             tree_edge_weight = original_G.get_edge_data(original_edge[0], original_edge[1])["weight"]
+    #             networkx_mst.add_edge(original_edge[0], original_edge[1], weight = tree_edge_weight, id = edge_id)
+    #             break
 
     end_time = time.time()
     memory_consumption = tracemalloc.get_traced_memory()[1]
@@ -198,13 +215,4 @@ if __name__ == "__main__":
 
     counter = 0
 
-    edge_list = list(G.edges)
-    for i in range(0, len(edge_list)):
-        edge = edge_list[i]
-        if (i % 2 == 0):
-            G.remove_edge(edge[0], edge[1])
-
     mst, ktime, b = Run(G)
-
-    print(ktime)
-    print(counter)
